@@ -49,10 +49,10 @@ module Telecr
         next_mw.call(ctx)
       end
       
-      private
+     
       
       # Determine if this update should be rate limited
-      def should_rate_limit?(ctx : Core::Context) : Bool
+      private def should_rate_limit?(ctx : Core::Context) : Bool
         # Don't rate limit polls or chat member updates
         return false if ctx.update.poll?
         return false if ctx.update.chat_member?
@@ -60,29 +60,29 @@ module Telecr
       end
       
       # Check if any limit is exceeded
-      def limit_exceeded?(ctx : Core::Context) : Bool
+      private def limit_exceeded?(ctx : Core::Context) : Bool
         global_limit?(ctx) || user_limit?(ctx) || chat_limit?(ctx)
       end
       
       # Check global limit
-      def global_limit?(ctx : Core::Context) : Bool
+      private def global_limit?(ctx : Core::Context) : Bool
         check_limit(:global, "global", ctx)
       end
       
       # Check per-user limit
-      def user_limit?(ctx : Core::Context) : Bool
+      private def user_limit?(ctx : Core::Context) : Bool
         return false unless user_id = ctx.from&.id
         check_limit(:user, "user:#{user_id}", ctx)
       end
       
       # Check per-chat limit
-      def chat_limit?(ctx : Core::Context) : Bool
+      private def chat_limit?(ctx : Core::Context) : Bool
         return false unless chat_id = ctx.chat&.id
         check_limit(:chat, "chat:#{chat_id}", ctx)
       end
       
       # Generic limit checker
-      def check_limit(type : Symbol, key : String, ctx : Core::Context) : Bool
+      private def check_limit(type : Symbol, key : String, ctx : Core::Context) : Bool
         limit_config = @options[type]?
         return false unless limit_config
         
@@ -92,7 +92,7 @@ module Telecr
       end
       
       # Increment all applicable counters
-      def increment_counters(ctx : Core::Context)
+      private def increment_counters(ctx : Core::Context)
         now = Time.utc
         
         # Global counter
@@ -112,7 +112,7 @@ module Telecr
       end
       
       # Response when rate limit is hit
-      def rate_limit_response(ctx : Core::Context)
+      private def rate_limit_response(ctx : Core::Context)
         ctx.reply("⏳ Please wait a moment before sending another request.") rescue nil
         nil
       end

@@ -23,7 +23,6 @@ module Telecr
         result
       end
       
-      private
       
       def get_user_id(ctx)
         ctx.from&.id

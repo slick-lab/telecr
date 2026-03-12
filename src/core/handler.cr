@@ -140,9 +140,9 @@ module Telecr
         stats
       end
       
-      private
+     
       
-      def detect_type(update)
+      private def detect_type(update)
         return "message" if update.message
         return "callback_query" if update.callback_query
         return "inline_query" if update.inline_query

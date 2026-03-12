@@ -55,7 +55,7 @@ module Telecr
         @middleware.clear
       end
       
-      private
+     
       
       # Build the middleware chain by wrapping each layer
       #
@@ -64,7 +64,7 @@ module Telecr
       #
       # @param final [Proc(Context ->)] The final handler
       # @return [Proc(Context ->)] The complete chain
-      def build_chain(final : Context ->)
+      private def build_chain(final : Context ->)
         # Start with the final handler
         chain = final
         

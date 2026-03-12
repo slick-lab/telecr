@@ -232,10 +232,9 @@ module Telecr
         process_update(update)
       end
       
-      private
 
       # Main polling loop that runs in background fiber
-      def poll_loop
+      private def poll_loop
         while @running
           begin 
             # Fetch updates from Telegram
@@ -266,7 +265,7 @@ module Telecr
       end
 
       # Process a single update from Telegram
-      def process_update(update : Types::Update)
+      private def process_update(update : Types::Update)
         # Log command usage for debugging
         if msg = update.message
           if text = msg.text
@@ -289,17 +288,17 @@ module Telecr
         end 
       end
       
-      def run_middleware_chain(ctx, &final)
+     private def run_middleware_chain(ctx, &final)
         @composer.run(ctx, &final)
       end 
       
-      def dispatch_to_handlers(ctx)
+     private def dispatch_to_handlers(ctx)
         if handler = @handlers.find_match(ctx)
           handler.call(ctx)
         end
       end 
       
-      def handle_error(error, ctx = nil)
+     private def handle_error(error, ctx = nil)
         if @error_handler
           @error_handler.call(error, ctx)
         else

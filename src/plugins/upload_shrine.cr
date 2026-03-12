@@ -58,7 +58,6 @@ module Telecr
         next_mw.call(ctx)
       end
       
-      private
       
       # Check if update contains downloadable files
       #

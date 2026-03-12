@@ -254,7 +254,7 @@ module Telecr
         puts "Restored #{@store.size} sessions from backup"
       end
       
-      private
+     
       
       # Check if a key has expired
       def expired?(key)

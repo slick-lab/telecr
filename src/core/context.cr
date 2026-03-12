@@ -538,10 +538,9 @@ module Telecr
         from&.id
       end
       
-      private
       
       # Check if object is a file (for uploads)
-      def file_object?(obj) : Bool
+      private def file_object?(obj) : Bool
         obj.is_a?(File) || 
         obj.is_a?(IO) || 
         (obj.is_a?(String) && File.exists?(obj))
