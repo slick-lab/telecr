@@ -1,7 +1,7 @@
 # bot.cr - Main bot class for Telecr
 # Handles message routing, middleware, and bot lifecycle
 
-require "./api/*"
+require "../api/*"
 
 module Telecr 
   module Core
