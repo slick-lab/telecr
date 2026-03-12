@@ -303,9 +303,8 @@ module Telecr
           @error_handler.call(error, ctx)
         else
         @logger.error("error occurred #{error.message}")
-          end
-        end
-      end
-    end
-  end
-end
+       end 
+     end
+   end
+ end
+ end
