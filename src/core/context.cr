@@ -7,12 +7,11 @@ module Telecr
     # It's passed through middleware chain and finally to the user's handler
     class Context
       # Core properties
-      property update : Types::Update      # The raw update from Telegram
+      property update : Types::Update?     # The raw update from Telegram
       property bot : Bot                    # The bot instance handling this update
       property state : Hash(Symbol, JSON::Any)  # Shared state between middlewares
       property match : Regex::MatchData?    # Match data from pattern matching (command/hears)
       property session : Hash(String, JSON::Any)  # Session data for this user
-      
       # Initialize with update and bot
       def initialize(@update : Types::Update, @bot : Bot)
         @state = {} of Symbol => JSON::Any

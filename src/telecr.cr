@@ -62,7 +62,6 @@ module Telecr
   # @param options [Hash] Webhook options
   # @return [Webhook::Server] Webhook server
   def self.webhook(bot : Core::Bot, **options)
-    require "./webhook/server"
     Webhook::Server.new(bot, **options)
   end
 end

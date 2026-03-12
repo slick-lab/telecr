@@ -16,7 +16,7 @@ module Telegem
       end
 
       # Alias for compatibility
-      alias to_hash to_h
+     
 
       # Inspect for debugging
       def inspect(io : IO) : Nil
@@ -64,6 +64,8 @@ module Telegem
       def id : Int64?
         @raw["id"]?.try(&.as_i64)
       end
+      
+      alias to_hash to_h
 
       def is_bot : Bool?
         @raw["is_bot"]?.try(&.as_bool)

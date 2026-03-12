@@ -51,7 +51,7 @@ module Telecr
             !ctx.message.try(&.web_app_data).nil?
           else
             # Try to call method on context or update
-            if ctx.responds_to?(key)
+            if ctx.responds_to?(key.to_sym)
               ctx.send(key) == value
             elsif ctx.update.responds_to?(key)
               ctx.update.send(key) == value

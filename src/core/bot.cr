@@ -144,19 +144,19 @@ module Telecr
       
       # Set bot profile photo
       def set_my_profile_photo(photo, **options)
-        @client.call('setMyProfilePhoto', {
+        @client.call("setMyProfilePhoto", {
           photo: photo
         }.merge(options))
       end 
 
       # Remove bot profile photo
       def remove_my_profile_photo
-        @client.call('removeMyProfilePhoto', {})
+        @client.call("removeMyProfilePhoto", {})
       end 
 
       # Get user's profile audios
       def get_user_profile_audios(user_id : String, **options)
-        result = @client.call('getUserProfileAudios', {
+        result = @client.call("getUserProfileAudios", {
           user_id: user_id
         }.merge(options))
         return nil unless result && result['audio']
@@ -165,7 +165,7 @@ module Telecr
 
       # Create a forum topic
       def create_forum_topic(chat_id, name, **options)
-        @client.call('createForumTopic', {
+        @client.call("createForumTopic", {
           chat_id: chat_id,
           name: name
         }.merge(options))
