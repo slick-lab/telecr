@@ -18,10 +18,10 @@ module Telecr
       def initialize(token : String)
         @client = Api::Client.new(token)
         @composer = Composer.new
-        @running : Bool = false
+        @running = false
         # Store handlers for different update types
         @handlers = HandlerCollection.new
-        @middleware = [] of {Middleware, Array(JSON::Any), Proc(Nil)?} 
+        @middleware = [] of Middleware
         @offset = 0                       # For long polling
         @logger = Logger.new(STDOUT)      # Logging
         @error_handler = nil               # Custom error handler
@@ -37,9 +37,36 @@ module Telecr
         end 
       end 
       
-      # TODO: Implement webhook support
-      def start_webhook(path : String)
-      end 
+      # Start bot in webhook mode
+      def start_webhook(
+        path : String = "/webhook",
+        port : Int32? = nil,
+        host : String = "0.0.0.0",
+        ssl : (Bool | Hash(Symbol, String))? = nil,
+        secret_token : String? = nil,
+        logger : Logger? = nil
+      )
+        # Create webhook server
+        @webhook_server = Webhook::Server.new(
+          self,
+          port: port,
+          host: host,
+          secret_token: secret_token,
+          logger: logger,
+          ssl: ssl
+        )
+
+        # Store the path
+        @webhook_path = path
+
+        # Start the server
+        @webhook_server.run
+
+        # Set webhook with Telegram
+        @webhook_server.set_webhook
+
+        @webhook_server
+      end
       
       # Gracefully stop the bot
       def shutdown
@@ -48,6 +75,14 @@ module Telecr
         @running = false 
         sleep 0.1
       end 
+      
+      # Stop webhook server
+      def stop_webhook
+        if @webhook_server
+          @webhook_server.stop
+          @webhook_server = nil
+        end
+      end
       
       # Register a command handler (e.g. /start)
       def command(name : String, &block)
@@ -69,7 +104,7 @@ module Telecr
       
       # Generic handler registration
       def on(type, **filters, &block)
-       @handlers.add(type.to_s, filters, block)
+        @handlers.add(type.to_s, filters, block)
       end 
       
       # Handle contact sharing
@@ -142,35 +177,6 @@ module Telecr
         end 
       end 
       
-      # Set bot profile photo
-      def set_my_profile_photo(photo, **options)
-        @client.call("setMyProfilePhoto", {
-          photo: photo
-        }.merge(options))
-      end 
-
-      # Remove bot profile photo
-      def remove_my_profile_photo
-        @client.call("removeMyProfilePhoto", {})
-      end 
-
-      # Get user's profile audios
-      def get_user_profile_audios(user_id : String, **options)
-        result = @client.call("getUserProfileAudios", {
-          user_id: user_id
-        }.merge(options))
-        return nil unless result && result['audio']
-        Types::UserProfileAudios.new(result)
-      end
-
-      # Create a forum topic
-      def create_forum_topic(chat_id, name, **options)
-        @client.call("createForumTopic", {
-          chat_id: chat_id,
-          name: name
-        }.merge(options))
-      end 
-
       # Handle location messages
       def location(&block)
         on(:message, location: true) do |ctx|
@@ -178,66 +184,48 @@ module Telecr
         end 
       end 
       
+      # Set bot profile photo
+      def set_my_profile_photo(photo, **options)
+        params = {"photo" => photo}
+        options.each { |k, v| params[k.to_s] = v }
+        @client.call("setMyProfilePhoto", params)
+      end 
+
+      # Remove bot profile photo
+      def remove_my_profile_photo
+        @client.call("removeMyProfilePhoto", {} of String => JSON::Any)
+      end 
+
+      # Get user's profile audios
+      def get_user_profile_audios(user_id : String, **options)
+        params = {"user_id" => user_id}
+        options.each { |k, v| params[k.to_s] = v }
+        result = @client.call("getUserProfileAudios", params)
+        return nil unless result && result["audio"]?
+        Types::UserProfileAudios.new(result)
+      end
+
+      # Create a forum topic
+      def create_forum_topic(chat_id, name, **options)
+        params = {
+          "chat_id" => chat_id.to_s,
+          "name" => name
+        }
+        options.each { |k, v| params[k.to_s] = v.to_s }
+        @client.call("createForumTopic", params)
+      end 
+      
       # Add middleware to the chain
-      def use(middleware, *args, &block)
-        @middleware << [middleware, args, block]
+      def use(middleware : Middleware)
+        @middleware << middleware
         self
       end
-      
-      # Start bot in webhook mode
-#
-# @param path [String] URL path for webhook (e.g., "/webhook")
-# @param port [Int32?] Port to listen on (default: 3000)
-# @param host [String] Host to bind to (default: "0.0.0.0")
-# @param ssl [Bool | Hash(Symbol, String)?] SSL configuration
-# @param secret_token [String?] Custom secret token (auto-generated if nil)
-# @param logger [Logger?] Custom logger
-# @return [Webhook::Server] The webhook server instance
-            def start_webhook(
-path : String = "/webhook",
-port : Int32? = nil,
-host : String = "0.0.0.0",
-ssl : (Bool | Hash(Symbol, String))? = nil,
-secret_token : String? = nil,
-logger : Logger? = nil
-)
-# Create webhook server
-@webhook_server = Webhook::Server.new(
-self,
-port: port,
-host: host,
-secret_token: secret_token,
-logger: logger,
-ssl: ssl
-)
-
-
-# Store the path
-@webhook_path = path
-
-# Start the server
-@webhook_server.run
-
-# Set webhook with Telegram
-@webhook_server.set_webhook
-
-@webhook_server
-end
-
-# Stop webhook server
-def stop_webhook
-if @webhook_server
-@webhook_server.stop
-@webhook_server = nil
-end
-end
       
       # Set custom error handler
       def error(&block)
         @error_handler = block
       end
       
-
       # Process raw update data (useful for webhooks)
       def process(update_data)
         update = Types::Update.new(update_data)
@@ -246,57 +234,54 @@ end
       
       private
 
-# Main polling loop that runs in background fiber
-# Continuously fetches updates from Telegram
-    def poll_loop
-      while @running
-       begin 
-      # Fetch updates from Telegram
-      updates = @client.get_updates(
-        offset: @offset,
-        timeout: 30,
-        limit: 100
-      )
-      
-      # Process any updates received
-      if updates && updates.as_a.any?
-        updates.as_a.each do |u_data|
-          update = Types::Update.new(u_data.as_h)
-          process_update(update)
+      # Main polling loop that runs in background fiber
+      def poll_loop
+        while @running
+          begin 
+            # Fetch updates from Telegram
+            updates = @client.get_updates(
+              offset: @offset,
+              timeout: 30,
+              limit: 100
+            )
+            
+            # Process any updates received
+            if updates && updates.as_a.any?
+              updates.as_a.each do |u_data|
+                update = Types::Update.new(u_data.as_h)
+                process_update(update)
+              end
+              
+              # Update offset to acknowledge processed updates
+              last_update = updates.as_a.last
+              @offset = last_update["update_id"].as_i64 + 1
+              @logger.debug("Poll offset now #{@offset}")
+            end
+          rescue error
+            # Log error and continue polling
+            @logger.error("Poll loop error: #{error.message}")
+            sleep 1
+          end
+        end
+      end
+
+      # Process a single update from Telegram
+      def process_update(update : Types::Update)
+        # Log command usage for debugging
+        if msg = update.message
+          if text = msg.text
+            user = msg.from
+            cmd = text.split.first
+            @logger.info("#{cmd} : #{user.try(&.username)}")
+          end
         end
         
-        # Update offset to acknowledge processed updates
-        last_update = updates.as_a.last
-        @offset = last_update["update_id"].as_i64 + 1
-        @logger.debug("Poll offset now #{@offset}")
-      end
-    rescue error
-      # Log error and continue polling
-      @logger.error("Poll loop error: #{error.message}")
-      sleep 1
-    end
-  end
-end
-
-# Process a single update from Telegram
-# Routes to appropriate handlers through middleware chain
-def process_update(update : Types::Update)
-  # Log command usage for debugging
-  if msg = update.message
-    if text = msg.text
-      user = msg.from
-      cmd = text.split.first
-      @logger.info("#{cmd} : #{user.try(&.username)}")
-    end
-  end
-  
-  # Create context for this update
-    ctx = Context.new(update, self)
-      
-      begin 
- 
-    # Run middleware chain then dispatch to handlers
-         run_middleware_chain(ctx) do |context|
+        # Create context for this update
+        ctx = Context.new(update, self)
+        
+        begin 
+          # Run middleware chain then dispatch to handlers
+          run_middleware_chain(ctx) do |context|
             dispatch_to_handlers(context)
           end 
         rescue error 
@@ -305,13 +290,13 @@ def process_update(update : Types::Update)
       end
       
       def run_middleware_chain(ctx, &final)
-      @composer.run(ctx, &final)
+        @composer.run(ctx, &final)
       end 
       
       def dispatch_to_handlers(ctx)
-       if handler = @handlers.find_match(ctx)
-       handler.call(ctx)
-      end
+        if handler = @handlers.find_match(ctx)
+          handler.call(ctx)
+        end
       end 
       
       def handle_error(error, ctx = nil)
