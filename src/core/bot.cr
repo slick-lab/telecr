@@ -302,9 +302,7 @@ module Telecr
         if @error_handler
           @error_handler.call(error, ctx)
         else
-          @logger.error("❌ Unhandled error: #{error.class}: #{error.message}")
-          if ctx
-            @logger.error("Context - User: #{ctx.from&.id}, Chat: #{ctx.chat&.id}")
+        @logger.error("error occurred #{error.message}")
           end
         end
       end
