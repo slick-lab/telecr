@@ -17,8 +17,8 @@ end
 def mock_telegram_response(method : String, result : Hash(String, JSON::Any))
   WebMock.stub(:post, "https://api.telegram.org/botTEST_TOKEN/#{method}")
     .to_return(body: {
-      ok: true,
-      result: result
+      ok:     true,
+      result: result,
     }.to_json)
 end
 
@@ -26,9 +26,9 @@ end
 def mock_telegram_error(method : String, error_code : Int32, description : String)
   WebMock.stub(:post, "https://api.telegram.org/botTEST_TOKEN/#{method}")
     .to_return(status: error_code, body: {
-      ok: false,
-      error_code: error_code,
-      description: description
+      ok:          false,
+      error_code:  error_code,
+      description: description,
     }.to_json)
 end
 
