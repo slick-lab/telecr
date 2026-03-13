@@ -1,4 +1,4 @@
-# types.cr - Telegram API type system for Crystal
+# types.cr - Telegram API type system for Telecr
 
 module Telecr
   module Types
@@ -26,20 +26,20 @@ module Telecr
       end
 
       # Helper to convert nested objects
-      protected def wrap(key : String, type : BaseType.class) : Nil
+      protected def wrap(key : String, klass : BaseType.class) : Nil
         if value = @raw[key]?
-          @raw[key] = type.new(value.as_h).to_h.as(JSON::Any) unless value.is_a?(type)
+          @raw[key] = klass.new(value.as_h).to_h.as(JSON::Any) unless value.is_a?(klass)
         end
       end
 
       # Helper to convert nested arrays
-      protected def wrap_array(key : String, type : BaseType.class) : Nil
+      protected def wrap_array(key : String, klass : BaseType.class) : Nil
         if arr = @raw[key]?.try(&.as_a?)
           @raw[key] = arr.map do |item|
-            if item.is_a?(type)
+            if item.is_a?(klass)
               item.to_h.as(JSON::Any)
             else
-              type.new(item.as_h).to_h.as(JSON::Any)
+              klass.new(item.as_h).to_h.as(JSON::Any)
             end
           end.as(JSON::Any)
         end
