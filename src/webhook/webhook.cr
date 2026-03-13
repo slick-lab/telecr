@@ -254,10 +254,16 @@ end
 def stop
   return unless @running
   @running = false
-  @server&.close
-  @logger.info(" Webhook server stopped")
-  @server = nil
+  
+  # Close server only if it exists 
+  if server = @server
+    server.close
+    @server = nil
+  end
 end
+      
+    
+
 
 # Generate the full webhook URL based on SSL mode
 #
