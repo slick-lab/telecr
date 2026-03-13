@@ -1,7 +1,6 @@
 # context.cr - Context object passed through middleware and handlers
 # Contains all data about the current update and provides helper methods
 # Fully compatible with Telegram Bot API 9.5 (March 2026)
-# Note: Uses explicit conditionals instead of &. to avoid compiler issues
 
 module Telecr
   module Core 
@@ -241,25 +240,28 @@ module Telecr
       
       # ===== Response Methods =====
       
-      # Send a text message to the chat
-      def reply(text : String, **options)
+      # Send a text message to the chat (with hash options)
+      def reply(text : String, options : Hash(String, JSON::Any) = {} of String => JSON::Any)
         if chat_obj = self.chat
-          params = { chat_id: chat_obj.id, text: text }.merge(options)
+          params = { "chat_id" => chat_obj.id, "text" => text }.merge(options)
           @bot.client.call("sendMessage", params)
         end
       end
       
-      def reply(text : String, options : Hash)
-       if chat_obj = self.chat
-         params = { chat_id: chat_obj.id, text: text }.merge(options)
-        @bot.client.call("sendMessage", params)
-        end 
-      end 
-
+      # Send a text message to the chat (with named arguments)
+      def reply(text : String, **options)
+        if chat_obj = self.chat
+          params = { "chat_id" => chat_obj.id, "text" => text }
+          options.each { |k, v| params[k.to_s] = v }
+          @bot.client.call("sendMessage", params)
+        end
+      end
+      
       # NEW in API 9.5: Send a message draft (streaming)
       def reply_draft(text : String, **options)
         if chat_obj = self.chat
-          params = { chat_id: chat_obj.id, text: text }.merge(options)
+          params = { "chat_id" => chat_obj.id, "text" => text }
+          options.each { |k, v| params[k.to_s] = v }
           @bot.client.call("sendMessageDraft", params)
         end
       end
@@ -268,10 +270,11 @@ module Telecr
       def edit_message_text(text : String, **options)
         if (msg = self.message) && (chat_obj = self.chat)
           params = {
-            chat_id: chat_obj.id,
-            message_id: msg.message_id,
-            text: text
-          }.merge(options)
+            "chat_id" => chat_obj.id,
+            "message_id" => msg.message_id,
+            "text" => text
+          }
+          options.each { |k, v| params[k.to_s] = v }
           
           @bot.client.call("editMessageText", params)
         end
@@ -281,7 +284,7 @@ module Telecr
       def delete_message(message_id : Int64? = nil)
         mid = message_id || (self.message ? self.message.message_id : nil)
         if mid && (chat_obj = self.chat)
-          @bot.client.call("deleteMessage", {chat_id: chat_obj.id, message_id: mid})
+          @bot.client.call("deleteMessage", { "chat_id" => chat_obj.id, "message_id" => mid })
         end
       end
       
@@ -289,11 +292,12 @@ module Telecr
       def answer_callback_query(text : String? = nil, show_alert : Bool = false, **options)
         if cq = self.callback_query
           params = {
-            callback_query_id: cq.id,
-            show_alert: show_alert
-          }.merge(options)
+            "callback_query_id" => cq.id,
+            "show_alert" => show_alert
+          }
+          params["text"] = text if text
+          options.each { |k, v| params[k.to_s] = v }
           
-          params[:text] = text if text
           @bot.client.call("answerCallbackQuery", params)
         end
       end
@@ -302,9 +306,10 @@ module Telecr
       def answer_inline_query(results : Array, **options)
         if iq = self.inline_query
           params = {
-            inline_query_id: iq.id,
-            results: results.to_json
-          }.merge(options)
+            "inline_query_id" => iq.id,
+            "results" => results.to_json
+          }
+          options.each { |k, v| params[k.to_s] = v }
           
           @bot.client.call("answerInlineQuery", params)
         end
@@ -315,12 +320,14 @@ module Telecr
       # Send a photo
       def photo(photo, caption : String? = nil, **options)
         if chat_obj = self.chat
-          params = { chat_id: chat_obj.id, caption: caption }.merge(options)
+          params = { "chat_id" => chat_obj.id }
+          params["caption"] = caption if caption
+          options.each { |k, v| params[k.to_s] = v }
           
           if file_object?(photo)
-            @bot.client.upload("sendPhoto", params.merge(photo: photo))
+            @bot.client.upload("sendPhoto", params.merge({ "photo" => photo }))
           else
-            @bot.client.call("sendPhoto", params.merge(photo: photo))
+            @bot.client.call("sendPhoto", params.merge({ "photo" => photo }))
           end
         end
       end
@@ -328,12 +335,14 @@ module Telecr
       # Send a document
       def document(document, caption : String? = nil, **options)
         if chat_obj = self.chat
-          params = { chat_id: chat_obj.id, caption: caption }.merge(options)
+          params = { "chat_id" => chat_obj.id }
+          params["caption"] = caption if caption
+          options.each { |k, v| params[k.to_s] = v }
           
           if file_object?(document)
-            @bot.client.upload("sendDocument", params.merge(document: document))
+            @bot.client.upload("sendDocument", params.merge({ "document" => document }))
           else
-            @bot.client.call("sendDocument", params.merge(document: document))
+            @bot.client.call("sendDocument", params.merge({ "document" => document }))
           end
         end
       end
@@ -341,12 +350,14 @@ module Telecr
       # Send an audio file
       def audio(audio, caption : String? = nil, **options)
         if chat_obj = self.chat
-          params = { chat_id: chat_obj.id, caption: caption }.merge(options)
+          params = { "chat_id" => chat_obj.id }
+          params["caption"] = caption if caption
+          options.each { |k, v| params[k.to_s] = v }
           
           if file_object?(audio)
-            @bot.client.upload("sendAudio", params.merge(audio: audio))
+            @bot.client.upload("sendAudio", params.merge({ "audio" => audio }))
           else
-            @bot.client.call("sendAudio", params.merge(audio: audio))
+            @bot.client.call("sendAudio", params.merge({ "audio" => audio }))
           end
         end
       end
@@ -354,12 +365,14 @@ module Telecr
       # Send a video
       def video(video, caption : String? = nil, **options)
         if chat_obj = self.chat
-          params = { chat_id: chat_obj.id, caption: caption }.merge(options)
+          params = { "chat_id" => chat_obj.id }
+          params["caption"] = caption if caption
+          options.each { |k, v| params[k.to_s] = v }
           
           if file_object?(video)
-            @bot.client.upload("sendVideo", params.merge(video: video))
+            @bot.client.upload("sendVideo", params.merge({ "video" => video }))
           else
-            @bot.client.call("sendVideo", params.merge(video: video))
+            @bot.client.call("sendVideo", params.merge({ "video" => video }))
           end
         end
       end
@@ -367,12 +380,14 @@ module Telecr
       # Send a voice message
       def voice(voice, caption : String? = nil, **options)
         if chat_obj = self.chat
-          params = { chat_id: chat_obj.id, caption: caption }.merge(options)
+          params = { "chat_id" => chat_obj.id }
+          params["caption"] = caption if caption
+          options.each { |k, v| params[k.to_s] = v }
           
           if file_object?(voice)
-            @bot.client.upload("sendVoice", params.merge(voice: voice))
+            @bot.client.upload("sendVoice", params.merge({ "voice" => voice }))
           else
-            @bot.client.call("sendVoice", params.merge(voice: voice))
+            @bot.client.call("sendVoice", params.merge({ "voice" => voice }))
           end
         end
       end
@@ -385,8 +400,9 @@ module Telecr
       # Send a sticker
       def sticker(sticker, **options)
         if chat_obj = self.chat
-          params = { chat_id: chat_obj.id, sticker: sticker }.merge(options)
-          @bot.client.call("sendSticker", params)
+          params = { "chat_id" => chat_obj.id }
+          options.each { |k, v| params[k.to_s] = v }
+          @bot.client.call("sendSticker", params.merge({ "sticker" => sticker }))
         end
       end
       
@@ -394,10 +410,11 @@ module Telecr
       def location(latitude : Float64, longitude : Float64, **options)
         if chat_obj = self.chat
           params = { 
-            chat_id: chat_obj.id, 
-            latitude: latitude, 
-            longitude: longitude 
-          }.merge(options)
+            "chat_id" => chat_obj.id, 
+            "latitude" => latitude, 
+            "longitude" => longitude 
+          }
+          options.each { |k, v| params[k.to_s] = v }
           
           @bot.client.call("sendLocation", params)
         end
@@ -406,7 +423,8 @@ module Telecr
       # Send a chat action (typing, uploading, etc.)
       def send_chat_action(action : String, **options)
         if chat_obj = self.chat
-          params = { chat_id: chat_obj.id, action: action }.merge(options)
+          params = { "chat_id" => chat_obj.id, "action" => action }
+          options.each { |k, v| params[k.to_s] = v }
           @bot.client.call("sendChatAction", params)
         end
       end
@@ -415,10 +433,11 @@ module Telecr
       def forward_message(from_chat_id : Int64, message_id : Int64, **options)
         if chat_obj = self.chat
           params = { 
-            chat_id: chat_obj.id, 
-            from_chat_id: from_chat_id, 
-            message_id: message_id 
-          }.merge(options)
+            "chat_id" => chat_obj.id, 
+            "from_chat_id" => from_chat_id, 
+            "message_id" => message_id 
+          }
+          options.each { |k, v| params[k.to_s] = v }
           
           @bot.client.call("forwardMessage", params)
         end
@@ -428,10 +447,11 @@ module Telecr
       def copy_message(from_chat_id : Int64, message_id : Int64, **options)
         if chat_obj = self.chat
           params = { 
-            chat_id: chat_obj.id, 
-            from_chat_id: from_chat_id, 
-            message_id: message_id 
-          }.merge(options)
+            "chat_id" => chat_obj.id, 
+            "from_chat_id" => from_chat_id, 
+            "message_id" => message_id 
+          }
+          options.each { |k, v| params[k.to_s] = v }
           
           @bot.client.call("copyMessage", params)
         end
@@ -442,7 +462,8 @@ module Telecr
       # Pin a message in the chat
       def pin_message(message_id : Int64, **options)
         if chat_obj = self.chat
-          params = { chat_id: chat_obj.id, message_id: message_id }.merge(options)
+          params = { "chat_id" => chat_obj.id, "message_id" => message_id }
+          options.each { |k, v| params[k.to_s] = v }
           @bot.client.call("pinChatMessage", params)
         end
       end
@@ -450,7 +471,8 @@ module Telecr
       # Unpin a message
       def unpin_message(**options)
         if chat_obj = self.chat
-          params = { chat_id: chat_obj.id }.merge(options)
+          params = { "chat_id" => chat_obj.id }
+          options.each { |k, v| params[k.to_s] = v }
           @bot.client.call("unpinChatMessage", params)
         end
       end
@@ -458,7 +480,8 @@ module Telecr
       # Kick a member from the chat
       def kick_chat_member(user_id : Int64, **options)
         if chat_obj = self.chat
-          params = { chat_id: chat_obj.id, user_id: user_id }.merge(options)
+          params = { "chat_id" => chat_obj.id, "user_id" => user_id }
+          options.each { |k, v| params[k.to_s] = v }
           @bot.client.call("kickChatMember", params)
         end
       end
@@ -466,7 +489,8 @@ module Telecr
       # Ban a member from the chat
       def ban_chat_member(user_id : Int64, **options)
         if chat_obj = self.chat
-          params = { chat_id: chat_obj.id, user_id: user_id }.merge(options)
+          params = { "chat_id" => chat_obj.id, "user_id" => user_id }
+          options.each { |k, v| params[k.to_s] = v }
           @bot.client.call("banChatMember", params)
         end
       end
@@ -474,7 +498,8 @@ module Telecr
       # Unban a member
       def unban_chat_member(user_id : Int64, **options)
         if chat_obj = self.chat
-          params = { chat_id: chat_obj.id, user_id: user_id }.merge(options)
+          params = { "chat_id" => chat_obj.id, "user_id" => user_id }
+          options.each { |k, v| params[k.to_s] = v }
           @bot.client.call("unbanChatMember", params)
         end
       end
@@ -482,7 +507,8 @@ module Telecr
       # Get chat administrators
       def get_chat_administrators(**options)
         if chat_obj = self.chat
-          params = { chat_id: chat_obj.id }.merge(options)
+          params = { "chat_id" => chat_obj.id }
+          options.each { |k, v| params[k.to_s] = v }
           @bot.client.call("getChatAdministrators", params)
         end
       end
@@ -490,7 +516,8 @@ module Telecr
       # Get members count
       def get_chat_members_count(**options)
         if chat_obj = self.chat
-          params = { chat_id: chat_obj.id }.merge(options)
+          params = { "chat_id" => chat_obj.id }
+          options.each { |k, v| params[k.to_s] = v }
           @bot.client.call("getChatMembersCount", params)
         end
       end
@@ -498,7 +525,8 @@ module Telecr
       # Get chat info
       def get_chat(**options)
         if chat_obj = self.chat
-          params = { chat_id: chat_obj.id }.merge(options)
+          params = { "chat_id" => chat_obj.id }
+          options.each { |k, v| params[k.to_s] = v }
           @bot.client.call("getChat", params)
         end
       end
@@ -518,19 +546,25 @@ module Telecr
         {} of String => JSON::Any
       end
       
-      # Reply with a keyboard
+      # Reply with a keyboard (using the hash version of reply)
       def reply_with_keyboard(text : String, keyboard_markup, **options)
         if chat_obj = self.chat
           reply_markup = keyboard_markup.is_a?(Hash) ? keyboard_markup : keyboard_markup.to_h
-          self.reply(text, reply_markup: reply_markup, options)
+          # Convert named args to hash and merge with reply_markup
+          opts = options.to_h
+          opts["reply_markup"] = reply_markup
+          self.reply(text, opts)
         end
       end
       
-      # Reply with inline keyboard
+      # Reply with inline keyboard (using the hash version of reply)
       def reply_with_inline_keyboard(text : String, inline_markup, **options)
         if chat_obj = self.chat
           reply_markup = inline_markup.is_a?(Hash) ? inline_markup : inline_markup.to_h
-          self.reply(text, reply_markup: reply_markup, options)
+          # Convert named args to hash and merge with reply_markup
+          opts = options.to_h
+          opts["reply_markup"] = reply_markup
+          self.reply(text, opts)
         end
       end
       
@@ -538,11 +572,12 @@ module Telecr
       def remove_keyboard(text : String? = nil, **options)
         if chat_obj = self.chat
           # Placeholder for keyboard removal
-          reply_markup = {remove_keyboard: true}
+          opts = options.to_h
+          opts["remove_keyboard"] = true
           if text
-            self.reply(text, reply_markup: reply_markup, **options)
+            self.reply(text, opts)
           else
-            reply_markup
+            opts
           end
         end
       end
@@ -551,10 +586,11 @@ module Telecr
       def edit_message_reply_markup(reply_markup, **options)
         if (msg = self.message) && (chat_obj = self.chat)
           params = {
-            chat_id: chat_obj.id,
-            message_id: msg.message_id,
-            reply_markup: reply_markup
-          }.merge(options)
+            "chat_id" => chat_obj.id,
+            "message_id" => msg.message_id,
+            "reply_markup" => reply_markup
+          }
+          options.each { |k, v| params[k.to_s] = v }
           
           @bot.client.call("editMessageReplyMarkup", params)
         end
