@@ -102,7 +102,7 @@ module Telecr
       # @param buttons [Array] Variable number of button definitions
       # @return [self] For method chaining
       def row(*buttons)
-        @rows << buttons.to_a
+        # Convert buttons to the right type converted = buttons.to_a.map do |btn|   hash = {} of String => JSON::Any   btn.each do |k, v|     hash[k.to_s] = JSON::Any.new(v.to_s)   end   hash end @rows << converted
         self
       end
       
