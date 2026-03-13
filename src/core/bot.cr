@@ -8,7 +8,7 @@ module Telecr
     # Main bot class that users interact with
     class Bot
       # Core components
-      getter client : Api::Client      # Handles Telegram API calls
+      getter client : Telecr::Api::Client      # Handles Telegram API calls
       getter composer : Composer       # Manages middleware chain
       getter running : Bool             # Bot running state
       getter webhook_server : Webhook::Server?
