@@ -79,34 +79,34 @@ module Telecr
       # @return [nil]
       def process_files(ctx : Core::Context)
         # Handle photos (array of sizes)
-        if photos = ctx.message&.photo
+        if photos = ctx.message.photo
           # Get largest photo
           largest = photos.max_by? { |p| p.file_size.to_i64 }
           process_file(ctx, largest, "photo") if largest
         end
         
         # Handle document
-        if doc = ctx.message&.document
+        if doc = ctx.message.document
           process_file(ctx, doc, "document") if allowed?("document")
         end
         
         # Handle video
-        if video = ctx.message&.video
+        if video = ctx.message.video
           process_file(ctx, video, "video") if allowed?("video")
         end
         
         # Handle audio
-        if audio = ctx.message&.audio
+        if audio = ctx.message.audio
           process_file(ctx, audio, "audio") if allowed?("audio")
         end
         
         # Handle voice
-        if voice = ctx.message&.voice
+        if voice = ctx.message.voice
           process_file(ctx, voice, "voice") if allowed?("voice")
         end
         
         # Handle sticker
-        if sticker = ctx.message&.sticker
+        if sticker = ctx.message.sticker
           process_file(ctx, sticker, "sticker") if allowed?("sticker")
         end
       end
