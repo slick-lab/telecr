@@ -28,7 +28,7 @@ module Telecr
       # Helper to convert nested objects
       protected def wrap(key : String, klass : BaseType.class) : Nil
         if value = @raw[key]?
-          @raw[key] = klass.new(value.as_h).to_h.as(JSON::Any) unless value.is_a?(klass)
+          @raw[key] = klass.new(value.as_h).to_h.as(JSON::Any) unless value.is_a?(BaseType)
         end
       end
 
