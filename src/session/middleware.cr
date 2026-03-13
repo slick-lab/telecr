@@ -25,7 +25,7 @@ module Telecr
       
       
       def get_user_id(ctx)
-        ctx.from&.id
+        ctx.from.id
       end
     end
   end
