@@ -7,6 +7,7 @@ require "yaml"
 require "openssl"
 require "json"
 require "uri"
+require "log"
 
 module Telecr
   module Webhook
@@ -16,7 +17,7 @@ module Telecr
       getter bot : Telecr::Core::Bot
       getter port : Int32
       getter host : String
-      getter logger : Logger
+      getter logger : Log
       getter secret_token : String
       getter running : Bool
       getter server : HTTP::Server?
