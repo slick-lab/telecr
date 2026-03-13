@@ -13,7 +13,7 @@ module Telecr
     # Webhook server that listens for Telegram updates via HTTPS
     class Server
       # Core properties
-      getter bot : Bot
+      getter bot : Telecr::Core::Bot
       getter port : Int32
       getter host : String
       getter logger : Logger
