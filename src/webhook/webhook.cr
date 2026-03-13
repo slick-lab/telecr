@@ -32,7 +32,7 @@ module Telecr
         ssl : (Bool | Hash(Symbol, String))? = nil
       )
         # Set up logging
-        @logger = logger || Logger.new(STDOUT)
+        @logger = logger || Log.for("telecr.api")
         @logger.level = Logger::INFO
         
         # Set port from param, env, or default

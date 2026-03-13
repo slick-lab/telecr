@@ -7,7 +7,7 @@ require "./markup/*"
 require "./plugins/*"
 require "./session/*"
 require "./webhook/*"
-require "logger"
+require "log"
 require "json"
 
 module Telecr

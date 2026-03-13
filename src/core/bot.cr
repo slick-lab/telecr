@@ -23,7 +23,7 @@ module Telecr
         @handlers = HandlerCollection.new
         @middleware = [] of Middleware
         @offset = 0                       # For long polling
-        @logger = Logger.new(STDOUT)      # Logging
+        @logger = Log.for("telecr.api")     # Logging
         @error_handler = nil               # Custom error handler
         @webhook_server = nil
         @webhook_path = nil

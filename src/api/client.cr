@@ -4,7 +4,7 @@
 require "http"
 require "http/client"
 require "json"
-require "logger"
+require "log"
 
 module Telegem
   # API module contains all Telegram API interaction classes
@@ -18,8 +18,7 @@ module Telegem
       # @option options [Int32] :timeout Request timeout in seconds (default 30)
       def initialize(token : String, **options)
         @token = token
-        @logger = Logger.new(STDOUT)
-        @logger.level = Logger::INFO
+        @logger = Log.for("telecr.api")
         
         # Set timeout from options or default to 30 seconds
         @timeout = options[:timeout]? || 30

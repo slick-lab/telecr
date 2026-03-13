@@ -39,7 +39,7 @@ module Telecr
         @max_size : Int64 = 20 * 1024 * 1024,  # 20MB default
         @storage_path : (Core::Context, String -> String)? = nil
       )
-        @logger = Logger.new(STDOUT)
+        @logger = Log.for("telecr.api")
         @logger.info("📎 Upload plugin initialized")
       end
       
