@@ -6,7 +6,7 @@ require "http/client"
 require "json"
 require "log"
 
-module Telegem
+module Telecr
   # API module contains all Telegram API interaction classes
   module Api
     # Main client class for making requests to Telegram Bot API
