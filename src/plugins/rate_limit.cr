@@ -101,7 +101,7 @@ module Telecr
         end
         
         # User counter
-        if (user_config = @options[:user]?) && (user_id = ctx.from&.id)
+        if (user_config = @options[:user]?) && (user_id = ctx.from.id)
           @counters[:user].increment("user:#{user_id}", 1, ttl: user_config[:per])
         end
         
