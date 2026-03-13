@@ -5,16 +5,16 @@ module Telecr
         @store = store || MemoryStore.new
       end 
       
-      def call(ctx, next_middleware)
+      def call(ctx, next_mw)
         user_id = get_user_id(ctx)
-        return next_middleware.call(ctx) unless user_id
+        return next_me.call(ctx) unless user_id
 
         # Load session
         ctx.session = @store.get(user_id) || {} of String => JSON::Any
         
         begin
           # Execute the rest of the chain
-          result = next_middleware.call(ctx)
+          result = next_mw.call(ctx)
         ensure
           # Always save session, even if error
           @store.set(user_id, ctx.session)
