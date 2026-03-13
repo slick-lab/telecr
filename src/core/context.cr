@@ -249,6 +249,13 @@ module Telecr
         end
       end
       
+      def reply(text : String, options : Hash)
+       if chat_obj = self.chat
+         params = { chat_id: chat_obj.id, text: text }.merge(options)
+        @bot.client.call("sendMessage", params)
+        end 
+      end 
+
       # NEW in API 9.5: Send a message draft (streaming)
       def reply_draft(text : String, **options)
         if chat_obj = self.chat
@@ -515,7 +522,7 @@ module Telecr
       def reply_with_keyboard(text : String, keyboard_markup, **options)
         if chat_obj = self.chat
           reply_markup = keyboard_markup.is_a?(Hash) ? keyboard_markup : keyboard_markup.to_h
-          self.reply(text, reply_markup: reply_markup, **options)
+          self.reply(text, reply_markup: reply_markup, options)
         end
       end
       
@@ -523,7 +530,7 @@ module Telecr
       def reply_with_inline_keyboard(text : String, inline_markup, **options)
         if chat_obj = self.chat
           reply_markup = inline_markup.is_a?(Hash) ? inline_markup : inline_markup.to_h
-          self.reply(text, reply_markup: reply_markup, **options)
+          self.reply(text, reply_markup: reply_markup, options)
         end
       end
       
