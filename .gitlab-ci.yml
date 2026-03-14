@@ -11,8 +11,10 @@ cache:
 before_script:
   - apt-get update -qq && apt-get install -y -qq libssl-dev git
   - shards install
+
 stages:
   - test
+  - build
   - docs
   - pages
 
@@ -26,6 +28,23 @@ test:
       - spec/output/
     reports:
       junit: spec/output/junit.xml
+  only:
+    - tags
+  except:
+    - branches
+
+build:
+  stage: build
+  script:
+    - crystal build src/telecr.cr -o telecr
+    - crystal build bin/telecr-ssl.cr -o telecr-ssl
+  artifacts:
+    paths:
+      - telecr
+      - telecr-ssl
+    expire_in: 1 week
+  only:
+    - tags
 
 docs:
   stage: docs
