@@ -1,143 +1,140 @@
-# markup_inline.cr - Inline keyboard markup builders for Telecr
-# Provides inline keyboard creation helpers for messages
+# markup/inline.cr - Inline keyboard markup builders for Telecr
 
 module Telecr
   module Markup
     # ===== Inline Keyboard Helpers =====
-    # These create individual inline button definitions
     
     module InlineButtons
-      # Create a button that sends a callback query when pressed
-      #
-      # @param text [String] Button text
-      # @param data [String] Callback data (sent to bot when pressed)
-      # @param style [String?] Button style (e.g., "primary")
-      # @param icon_custom_emoji_id [String?] Custom emoji ID
-      # @return [Hash] Button configuration with callback_data
+      # Create a callback button
       def callback(text, data, style : String? = nil, icon_custom_emoji_id : String? = nil)
-        {
-          text: text,
-          callback_data: data,
-          style: style,
-          icon_custom_emoji_id: icon_custom_emoji_id
-        }.to_h.compact
+        result = {} of String => JSON::Any
+        result["text"] = JSON::Any.new(text)
+        result["callback_data"] = JSON::Any.new(data)
+        if style
+          result["style"] = JSON::Any.new(style)
+        end
+        if icon_custom_emoji_id
+          result["icon_custom_emoji_id"] = JSON::Any.new(icon_custom_emoji_id)
+        end
+        result
       end
       
-      # Create a button that opens a URL when pressed
-      #
-      # @param text [String] Button text
-      # @param url [String] URL to open
-      # @param style [String?] Button style
-      # @param icon_custom_emoji_id [String?] Custom emoji ID
-      # @return [Hash] Button configuration with url
+      # Create a URL button
       def url(text, url, style : String? = nil, icon_custom_emoji_id : String? = nil)
-        {
-          text: text,
-          url: url,
-          style: style,
-          icon_custom_emoji_id: icon_custom_emoji_id
-        }.to_h.compact
+        result = {} of String => JSON::Any
+        result["text"] = JSON::Any.new(text)
+        result["url"] = JSON::Any.new(url)
+        if style
+          result["style"] = JSON::Any.new(style)
+        end
+        if icon_custom_emoji_id
+          result["icon_custom_emoji_id"] = JSON::Any.new(icon_custom_emoji_id)
+        end
+        result
       end
       
-      # Create a button that switches to inline mode
-      #
-      # @param text [String] Button text
-      # @param query [String?] Inline query to insert
-      # @param style [String?] Button style
-      # @param icon_custom_emoji_id [String?] Custom emoji ID
-      # @return [Hash] Button configuration with switch_inline_query
+      # Create switch inline button
       def switch_inline(text, query : String? = nil, style : String? = nil, icon_custom_emoji_id : String? = nil)
-        {
-          text: text,
-          switch_inline_query: query,
-          style: style,
-          icon_custom_emoji_id: icon_custom_emoji_id
-        }.to_h.compact
+        result = {} of String => JSON::Any
+        result["text"] = JSON::Any.new(text)
+        if query
+          result["switch_inline_query"] = JSON::Any.new(query)
+        else
+          result["switch_inline_query"] = JSON::Any.new("")
+        end
+        if style
+          result["style"] = JSON::Any.new(style)
+        end
+        if icon_custom_emoji_id
+          result["icon_custom_emoji_id"] = JSON::Any.new(icon_custom_emoji_id)
+        end
+        result
       end
       
-      # Create a button that switches to inline mode in current chat
-      #
-      # @param text [String] Button text
-      # @param query [String?] Inline query to insert
-      # @param style [String?] Button style
-      # @param icon_custom_emoji_id [String?] Custom emoji ID
-      # @return [Hash] Button configuration with switch_inline_query_current_chat
+      # Create switch inline current chat button
       def switch_inline_current_chat(text, query : String? = nil, style : String? = nil, icon_custom_emoji_id : String? = nil)
-        {
-          text: text,
-          switch_inline_query_current_chat: query,
-          style: style,
-          icon_custom_emoji_id: icon_custom_emoji_id
-        }.to_h.compact
+        result = {} of String => JSON::Any
+        result["text"] = JSON::Any.new(text)
+        if query
+          result["switch_inline_query_current_chat"] = JSON::Any.new(query)
+        else
+          result["switch_inline_query_current_chat"] = JSON::Any.new("")
+        end
+        if style
+          result["style"] = JSON::Any.new(style)
+        end
+        if icon_custom_emoji_id
+          result["icon_custom_emoji_id"] = JSON::Any.new(icon_custom_emoji_id)
+        end
+        result
       end
       
-      # Create a button that launches a game
-      #
-      # @param text [String] Button text
-      # @param game_short_name [String] Game short name
-      # @param style [String?] Button style
-      # @param icon_custom_emoji_id [String?] Custom emoji ID
-      # @return [Hash] Button configuration with callback_game
+      # Create game button
       def callback_game(text, game_short_name, style : String? = nil, icon_custom_emoji_id : String? = nil)
-        {
-          text: text,
-          callback_game: { game_short_name: game_short_name },
-          style: style,
-          icon_custom_emoji_id: icon_custom_emoji_id
-        }.to_h.compact
+        result = {} of String => JSON::Any
+        result["text"] = JSON::Any.new(text)
+        result["callback_game"] = JSON::Any.new({"game_short_name" => game_short_name})
+        if style
+          result["style"] = JSON::Any.new(style)
+        end
+        if icon_custom_emoji_id
+          result["icon_custom_emoji_id"] = JSON::Any.new(icon_custom_emoji_id)
+        end
+        result
       end
       
-      # Create a payment button
-      #
-      # @param text [String] Button text
-      # @param style [String?] Button style
-      # @param icon_custom_emoji_id [String?] Custom emoji ID
-      # @return [Hash] Button configuration with pay flag
+      # Create pay button
       def pay(text, style : String? = nil, icon_custom_emoji_id : String? = nil)
-        {
-          text: text,
-          pay: true,
-          style: style,
-          icon_custom_emoji_id: icon_custom_emoji_id
-        }.to_h.compact
+        result = {} of String => JSON::Any
+        result["text"] = JSON::Any.new(text)
+        result["pay"] = JSON::Any.new(true)
+        if style
+          result["style"] = JSON::Any.new(style)
+        end
+        if icon_custom_emoji_id
+          result["icon_custom_emoji_id"] = JSON::Any.new(icon_custom_emoji_id)
+        end
+        result
       end
       
-      # Create a web app button
-      #
-      # @param text [String] Button text
-      # @param url [String?] Web app URL
-      # @param style [String?] Button style
-      # @param icon_custom_emoji_id [String?] Custom emoji ID
-      # @return [Hash] Button configuration with web_app
+      # Create web app button
       def web_app(text, url : String? = nil, style : String? = nil, icon_custom_emoji_id : String? = nil)
-        {
-          text: text,
-          web_app: { url: url },
-          style: style,
-          icon_custom_emoji_id: icon_custom_emoji_id
-        }.to_h.compact
+        result = {} of String => JSON::Any
+        result["text"] = JSON::Any.new(text)
+        if url
+          result["web_app"] = JSON::Any.new({"url" => url})
+        end
+        if style
+          result["style"] = JSON::Any.new(style)
+        end
+        if icon_custom_emoji_id
+          result["icon_custom_emoji_id"] = JSON::Any.new(icon_custom_emoji_id)
+        end
+        result
       end
       
-      # Create a login button
-      #
-      # @param text [String] Button text
-      # @param url [String] Login URL
-      # @param style [String?] Button style
-      # @param icon_custom_emoji_id [String?] Custom emoji ID
-      # @param options [Hash] Additional login URL options
-      # @return [Hash] Button configuration with login_url
+      # Create login button
       def login(text, url, style : String? = nil, icon_custom_emoji_id : String? = nil, **options)
-        login_url = { url: url }.merge(options)
-        {
-          text: text,
-          login_url: login_url,
-          style: style,
-          icon_custom_emoji_id: icon_custom_emoji_id
-        }.to_h.compact
+        result = {} of String => JSON::Any
+        result["text"] = JSON::Any.new(text)
+        
+        login_url = {"url" => url}
+        options.each do |k, v|
+          login_url[k.to_s] = v.to_s
+        end
+        result["login_url"] = JSON::Any.new(login_url)
+        
+        if style
+          result["style"] = JSON::Any.new(style)
+        end
+        if icon_custom_emoji_id
+          result["icon_custom_emoji_id"] = JSON::Any.new(icon_custom_emoji_id)
+        end
+        result
       end
     end
     
-    # Builder class for creating inline keyboards with a fluent interface
+    # Builder class for inline keyboards
     class InlineBuilder
       include InlineButtons
       
@@ -145,24 +142,22 @@ module Telecr
         @rows = [] of Array(Hash(String, JSON::Any))
       end
       
-      # Add a row of inline buttons
-      #
-      # @param buttons [Array] Variable number of button definitions
-      # @return [self] For method chaining
+      # Add a row of buttons
       def row(*buttons)
-        # Convert buttons to the right type converted = buttons.to_a.map do |btn|   hash = {} of String => JSON::Any   btn.each do |k, v|     hash[k.to_s] = JSON::Any.new(v.to_s)   end   hash end @rows << converted
+        converted = buttons.to_a.map do |btn|
+          btn
+        end
+        @rows << converted
         self
       end
       
-      # Build the final inline keyboard
-      #
-      # @return [InlineKeyboard] The constructed keyboard
+      # Build the final keyboard
       def build
         InlineKeyboard.new(@rows)
       end
     end
     
-    # Inline keyboard representation that can be converted to JSON
+    # Inline keyboard representation
     class InlineKeyboard
       getter rows : Array(Array(Hash(String, JSON::Any)))
       
@@ -170,29 +165,23 @@ module Telecr
       end
       
       # Convert to hash for Telegram API
-      #
-      # @return [Hash] Telegram-compatible inline keyboard hash
       def to_h
-        {
-          inline_keyboard: @rows
-        }
+        result = {} of String => JSON::Any
+        result["inline_keyboard"] = JSON::Any.new(@rows.map do |row|
+          JSON::Any.new(row.map do |btn|
+            JSON::Any.new(btn)
+          end)
+        end)
+        result
       end
       
-      # Convert to JSON for API calls
+      # Convert to JSON
       def to_json(*args)
         to_h.to_json(*args)
       end
     end
     
     # Factory method for creating inline keyboards
-    #
-    # @example
-    #   keyboard = Telecr::Markup.inline do |k|
-    #     k.row(callback("Yes", "yes_data"), callback("No", "no_data"))
-    #     k.row(url("Visit site", "https://example.com"))
-    #   end
-    #
-    # @return [InlineKeyboard] The constructed keyboard
     def self.inline(&block : InlineBuilder ->)
       builder = InlineBuilder.new
       block.call(builder)
