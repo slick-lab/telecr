@@ -31,9 +31,9 @@ end
 email = ARGV[1]? || "admin@#{domain}"
 
 # Check if certbot is installed
-unless system("which certbot > /dev/null", shell: true)
+unless system("which certbot > /dev/null")
 puts "📦 Installing certbot..."
-system("sudo apt update && sudo apt install -y certbot", shell: true)
+system("sudo apt update && sudo apt install -y certbot")
 end
 
 # Generate certificate
@@ -41,7 +41,7 @@ puts "\n Getting SSL certificate..."
 cert_cmd = "sudo certbot certonly --standalone -d #{domain} --email #{email} --agree-tos --non-interactive"
 puts "Running: #{cert_cmd}"
 
-if system(cert_cmd, shell: true)
+if system(cert_cmd)
 # Create config file
 config = {
 "domain" => domain,
