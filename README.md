@@ -20,7 +20,7 @@ Add to your `shard.yml`:
 ```yaml
 dependencies:
   telecr:
-    github: telegem-cr/telecr
+    github: slick-lab/telecr
     version: ~> 0.1.0
 ```
 
