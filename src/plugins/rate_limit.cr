@@ -27,6 +27,9 @@ module Telecr
           user: Session::MemoryStore.new,
           chat: Session::MemoryStore.new
         }
+        #logger may not be available in all contexts, so we check before using
+        @logger = Log.for("telecr.api")
+
       end
       
       # Main middleware call

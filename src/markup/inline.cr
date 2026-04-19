@@ -1,190 +1,93 @@
 # markup/inline.cr - Inline keyboard markup builders for Telecr
+require "json"
 
 module Telecr
   module Markup
-    # ===== Inline Keyboard Helpers =====
-    
+    # InlineButtons provides helper methods to generate button hashes.
+    # Updated to support custom emoji icons and styles (API 9.6).
     module InlineButtons
-      # Create a callback button
-      def callback(text, data, style : String? = nil, icon_custom_emoji_id : String? = nil)
-        result = {} of String => JSON::Any
-        result["text"] = JSON::Any.new(text)
-        result["callback_data"] = JSON::Any.new(data)
-        if style
-          result["style"] = JSON::Any.new(style)
-        end
-        if icon_custom_emoji_id
-          result["icon_custom_emoji_id"] = JSON::Any.new(icon_custom_emoji_id)
-        end
-        result
+      private def base_button(text : String, style : String? = nil, emoji_id : String? = nil)
+        btn = {"text" => JSON::Any.new(text)}
+        btn["style"] = JSON::Any.new(style) if style
+        btn["icon_custom_emoji_id"] = JSON::Any.new(emoji_id) if emoji_id
+        btn
       end
-      
-      # Create a URL button
-      def url(text, url, style : String? = nil, icon_custom_emoji_id : String? = nil)
-        result = {} of String => JSON::Any
-        result["text"] = JSON::Any.new(text)
-        result["url"] = JSON::Any.new(url)
-        if style
-          result["style"] = JSON::Any.new(style)
-        end
-        if icon_custom_emoji_id
-          result["icon_custom_emoji_id"] = JSON::Any.new(icon_custom_emoji_id)
-        end
-        result
+
+      def callback(text : String, data : String, style : String? = nil, emoji_id : String? = nil)
+        base_button(text, style, emoji_id).tap { |b| b["callback_data"] = JSON::Any.new(data) }
       end
-      
-      # Create switch inline button
-      def switch_inline(text, query : String? = nil, style : String? = nil, icon_custom_emoji_id : String? = nil)
-        result = {} of String => JSON::Any
-        result["text"] = JSON::Any.new(text)
-        if query
-          result["switch_inline_query"] = JSON::Any.new(query)
-        else
-          result["switch_inline_query"] = JSON::Any.new("")
-        end
-        if style
-          result["style"] = JSON::Any.new(style)
-        end
-        if icon_custom_emoji_id
-          result["icon_custom_emoji_id"] = JSON::Any.new(icon_custom_emoji_id)
-        end
-        result
+
+      def url(text : String, url : String, style : String? = nil, emoji_id : String? = nil)
+        base_button(text, style, emoji_id).tap { |b| b["url"] = JSON::Any.new(url) }
       end
-      
-      # Create switch inline current chat button
-      def switch_inline_current_chat(text, query : String? = nil, style : String? = nil, icon_custom_emoji_id : String? = nil)
-        result = {} of String => JSON::Any
-        result["text"] = JSON::Any.new(text)
-        if query
-          result["switch_inline_query_current_chat"] = JSON::Any.new(query)
-        else
-          result["switch_inline_query_current_chat"] = JSON::Any.new("")
+
+      def web_app(text : String, url : String, style : String? = nil, emoji_id : String? = nil)
+        base_button(text, style, emoji_id).tap do |b| 
+          b["web_app"] = JSON::Any.new({"url" => JSON::Any.new(url)})
         end
-        if style
-          result["style"] = JSON::Any.new(style)
-        end
-        if icon_custom_emoji_id
-          result["icon_custom_emoji_id"] = JSON::Any.new(icon_custom_emoji_id)
-        end
-        result
       end
-      
-      # Create game button
-      def callback_game(text, game_short_name, style : String? = nil, icon_custom_emoji_id : String? = nil)
-        result = {} of String => JSON::Any
-        result["text"] = JSON::Any.new(text)
-        result["callback_game"] = JSON::Any.new({"game_short_name" => game_short_name})
-        if style
-          result["style"] = JSON::Any.new(style)
-        end
-        if icon_custom_emoji_id
-          result["icon_custom_emoji_id"] = JSON::Any.new(icon_custom_emoji_id)
-        end
-        result
+
+      def switch_inline(text : String, query : String = "", current_chat : Bool = false, style : String? = nil, emoji_id : String? = nil)
+        key = current_chat ? "switch_inline_query_current_chat" : "switch_inline_query"
+        base_button(text, style, emoji_id).tap { |b| b[key] = JSON::Any.new(query) }
       end
-      
-      # Create pay button
-      def pay(text, style : String? = nil, icon_custom_emoji_id : String? = nil)
-        result = {} of String => JSON::Any
-        result["text"] = JSON::Any.new(text)
-        result["pay"] = JSON::Any.new(true)
-        if style
-          result["style"] = JSON::Any.new(style)
-        end
-        if icon_custom_emoji_id
-          result["icon_custom_emoji_id"] = JSON::Any.new(icon_custom_emoji_id)
-        end
-        result
-      end
-      
-      # Create web app button
-      def web_app(text, url : String? = nil, style : String? = nil, icon_custom_emoji_id : String? = nil)
-        result = {} of String => JSON::Any
-        result["text"] = JSON::Any.new(text)
-        if url
-          result["web_app"] = JSON::Any.new({"url" => url})
-        end
-        if style
-          result["style"] = JSON::Any.new(style)
-        end
-        if icon_custom_emoji_id
-          result["icon_custom_emoji_id"] = JSON::Any.new(icon_custom_emoji_id)
-        end
-        result
-      end
-      
-      # Create login button
-      def login(text, url, style : String? = nil, icon_custom_emoji_id : String? = nil, **options)
-        result = {} of String => JSON::Any
-        result["text"] = JSON::Any.new(text)
-        
-        login_url = {"url" => url}
-        options.each do |k, v|
-          login_url[k.to_s] = v.to_s
-        end
-        result["login_url"] = JSON::Any.new(login_url)
-        
-        if style
-          result["style"] = JSON::Any.new(style)
-        end
-        if icon_custom_emoji_id
-          result["icon_custom_emoji_id"] = JSON::Any.new(icon_custom_emoji_id)
-        end
-        result
+
+      def pay(text : String, style : String? = nil, emoji_id : String? = nil)
+        base_button(text, style, emoji_id).tap { |b| b["pay"] = JSON::Any.new(true) }
       end
     end
-    
-    # Builder class for inline keyboards
+
+    # Builder class for creating keyboards using a DSL
     class InlineBuilder
       include InlineButtons
-      
+
       def initialize
         @rows = [] of Array(Hash(String, JSON::Any))
       end
-      
-      # Add a row of buttons
+
+      # Adds a new row to the keyboard.
+      # Usage: row(callback("Yes", "y"), callback("No", "n"))
       def row(*buttons)
-        converted = buttons.to_a.map do |btn|
-          btn
-        end
-        @rows << converted
+        @rows << buttons.to_a
         self
       end
-      
-      # Build the final keyboard
-      def build
+
+      # Helper for single-button rows
+      def add(button)
+        @rows << [button]
+        self
+      end
+
+      def build : InlineKeyboard
         InlineKeyboard.new(@rows)
       end
     end
-    
-    # Inline keyboard representation
+
+    # Representation of the InlineKeyboardMarkup
     class InlineKeyboard
       getter rows : Array(Array(Hash(String, JSON::Any)))
-      
+
       def initialize(@rows)
       end
-      
-      # Convert to hash for Telegram API
+
+      # Formats the keyboard for the Telegram API
       def to_h
-        result = {} of String => JSON::Any
-        result["inline_keyboard"] = JSON::Any.new(@rows.map do |row|
-          JSON::Any.new(row.map do |btn|
-            JSON::Any.new(btn)
-          end)
-        end)
-        result
+        {
+          "inline_keyboard" => @rows.map do |row|
+            row.map { |btn| btn }
+          end
+        }
       end
-      
-      # Convert to JSON
-      def to_json(*args)
-        to_h.to_json(*args)
+
+      def to_json(json : JSON::Builder)
+        to_h.to_json(json)
       end
     end
-    
-    # Factory method for creating inline keyboards
-    def self.inline(&block : InlineBuilder ->)
+
+    # Factory method for the DSL
+    def self.inline(&block : InlineBuilder ->) : InlineKeyboard
       builder = InlineBuilder.new
-      block.call(builder)
+      yield builder
       builder.build
     end
   end

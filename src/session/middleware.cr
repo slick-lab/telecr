@@ -1,31 +1,39 @@
+# session/middleware.cr - Integrates session storage into the bot chain
+
 module Telecr
   module Session
+    # Session Middleware automatically loads and saves user data.
+    # It injects the session hash into the Context for easy access.
     class Middleware < Core::Middleware
-      def initialize(store = nil)
+      getter store : MemoryStore
+
+      def initialize(store : MemoryStore? = nil)
         @store = store || MemoryStore.new
       end 
-      
-      def call(ctx, next_mw)
-        user_id = get_user_id(ctx)
-        return next_me.call(ctx) unless user_id
 
-        # Load session
-        ctx.session = @store.get(user_id) || {} of String => JSON::Any
+      def call(ctx : Core::Context, next_mw : Core::Context ->)
+        user_id = get_user_id(ctx)
+        
+        # If we can't identify the user (e.g. anonymous channel post), just move on
+        return next_mw.call(ctx) unless user_id
+
+        # Load session from store (returns Hash(String, JSON::Any))
+        # We assume Context has a `session` property of type Hash(String, JSON::Any)
+        ctx.session = @store.get(user_id).try(&.as_h) || {} of String => JSON::Any
         
         begin
-          # Execute the rest of the chain
-          result = next_mw.call(ctx)
+          # Pass control to the next middleware/handler
+          next_mw.call(ctx)
         ensure
-          # Always save session, even if error
-          @store.set(user_id, ctx.session)
+          # Persist any changes made to ctx.session back to the store
+          @store.set(user_id, JSON::Any.new(ctx.session))
         end
-        
-        result
       end
       
-      
-      def get_user_id(ctx)
-        ctx.from.id
+      # Extract a unique identifier for the session key.
+      # Default is the User ID, but could be modified to Chat ID for group-sessions.
+      private def get_user_id(ctx) : String?
+        ctx.from.try(&.id.to_s)
       end
     end
   end
