@@ -1,171 +1,99 @@
 # markup/keyboard.cr - Reply keyboard markup builders for Telecr
+require "json"
 
 module Telecr
   module Markup
-    # ===== Reply Keyboard Helpers =====
-    # These create individual button definitions for reply keyboards
-    
+    # ReplyButtons provides methods for creating individual keyboard buttons.
+    # Supports style and custom emoji icons introduced in API 9.x.
     module ReplyButtons
-      # Create a regular text button
-      def text(content, style : String? = nil, icon_custom_emoji_id : String? = nil)
-        result = {} of String => JSON::Any
-        result["text"] = JSON::Any.new(content)
-        if style
-          result["style"] = JSON::Any.new(style)
-        end
-        if icon_custom_emoji_id
-          result["icon_custom_emoji_id"] = JSON::Any.new(icon_custom_emoji_id)
-        end
-        result
+      private def base_button(text : String, style : String? = nil, emoji_id : String? = nil)
+        btn = {"text" => JSON::Any.new(text)}
+        btn["style"] = JSON::Any.new(style) if style
+        btn["icon_custom_emoji_id"] = JSON::Any.new(emoji_id) if emoji_id
+        btn
       end
-      
-      # Create a button that requests user's phone number
-      def request_contact(text, style : String? = nil, icon_custom_emoji_id : String? = nil)
-        result = {} of String => JSON::Any
-        result["text"] = JSON::Any.new(text)
-        result["request_contact"] = JSON::Any.new(true)
-        if style
-          result["style"] = JSON::Any.new(style)
-        end
-        if icon_custom_emoji_id
-          result["icon_custom_emoji_id"] = JSON::Any.new(icon_custom_emoji_id)
-        end
-        result
+
+      def text(content : String, style : String? = nil, emoji_id : String? = nil)
+        base_button(content, style, emoji_id)
       end
-      
-      # Create a button that requests user's location
-      def request_location(text, style : String? = nil, icon_custom_emoji_id : String? = nil)
-        result = {} of String => JSON::Any
-        result["text"] = JSON::Any.new(text)
-        result["request_location"] = JSON::Any.new(true)
-        if style
-          result["style"] = JSON::Any.new(style)
-        end
-        if icon_custom_emoji_id
-          result["icon_custom_emoji_id"] = JSON::Any.new(icon_custom_emoji_id)
-        end
-        result
+
+      def request_contact(text : String, style : String? = nil, emoji_id : String? = nil)
+        base_button(text, style, emoji_id).tap { |b| b["request_contact"] = JSON::Any.new(true) }
       end
-      
-      # Create a button that creates a poll
-      def request_poll(text, poll_type : String? = nil, style : String? = nil, icon_custom_emoji_id : String? = nil)
-        result = {} of String => JSON::Any
-        result["text"] = JSON::Any.new(text)
-        if poll_type
-          result["request_poll"] = JSON::Any.new({"type" => poll_type})
-        else
-          result["request_poll"] = JSON::Any.new({} of String => JSON::Any)
-        end
-        if style
-          result["style"] = JSON::Any.new(style)
-        end
-        if icon_custom_emoji_id
-          result["icon_custom_emoji_id"] = JSON::Any.new(icon_custom_emoji_id)
-        end
-        result
+
+      def request_location(text : String, style : String? = nil, emoji_id : String? = nil)
+        base_button(text, style, emoji_id).tap { |b| b["request_location"] = JSON::Any.new(true) }
       end
-      
-      # Create a web app button
-      def web_app(text, url : String? = nil, style : String? = nil, icon_custom_emoji_id : String? = nil)
-        result = {} of String => JSON::Any
-        result["text"] = JSON::Any.new(text)
-        if url
-          result["url"] = JSON::Any.new(url)
+
+      def request_poll(text : String, poll_type : String? = nil, style : String? = nil, emoji_id : String? = nil)
+        base_button(text, style, emoji_id).tap do |b|
+          poll_data = poll_type ? {"type" => JSON::Any.new(poll_type)} : {} of String => JSON::Any
+          b["request_poll"] = JSON::Any.new(poll_data)
         end
-        if style
-          result["style"] = JSON::Any.new(style)
+      end
+
+      def web_app(text : String, url : String, style : String? = nil, emoji_id : String? = nil)
+        base_button(text, style, emoji_id).tap do |b|
+          b["web_app"] = JSON::Any.new({"url" => JSON::Any.new(url)})
         end
-        if icon_custom_emoji_id
-          result["icon_custom_emoji_id"] = JSON::Any.new(icon_custom_emoji_id)
-        end
-        result
       end
     end
-    
-    # Builder class for creating reply keyboards
+
     class ReplyBuilder
       include ReplyButtons
-      
+
       def initialize
         @rows = [] of Array(Hash(String, JSON::Any))
         @options = {
-          "resize_keyboard" => true,
-          "one_time_keyboard" => false,
-          "selective" => false
-        } of String => (Bool | String)
+          "resize_keyboard"   => JSON::Any.new(true),
+          "one_time_keyboard" => JSON::Any.new(false),
+          "selective"         => JSON::Any.new(false)
+        }
       end
-      
-      # Add a row of buttons
+
       def row(*buttons)
-        converted = buttons.to_a.map do |btn|
-          # btn is already a Hash(String, JSON::Any) from helper methods
-          btn
-        end
-        @rows << converted
+        @rows << buttons.to_a
         self
       end
+
+      def resize(v = true)   @options["resize_keyboard"] = JSON::Any.new(v); self end
+      def one_time(v = true) @options["one_time_keyboard"] = JSON::Any.new(v); self end
+      def selective(v = true) @options["selective"] = JSON::Any.new(v); self end
+      def persistent(v = true) @options["is_persistent"] = JSON::Any.new(v); self end
       
-      # Set whether keyboard should resize
-      def resize(value : Bool = true)
-        @options["resize_keyboard"] = value
-        self
-      end
-      
-      # Set whether keyboard should hide after use
-      def one_time(value : Bool = true)
-        @options["one_time_keyboard"] = value
-        self
-      end
-      
-      # Set selective mode
-      def selective(value : Bool = true)
-        @options["selective"] = value
-        self
-      end
-      
-      # Set placeholder text
       def placeholder(text : String)
-        @options["input_field_placeholder"] = text
+        @options["input_field_placeholder"] = JSON::Any.new(text)
         self
       end
-      
-      # Build the final keyboard
-      def build
+
+      def build : ReplyKeyboard
         ReplyKeyboard.new(@rows, @options)
       end
     end
-    
-    # Reply keyboard representation
+
     class ReplyKeyboard
-      def initialize(@rows : Array(Array(Hash(String, JSON::Any))), @options : Hash(String, Bool | String))
+      getter rows : Array(Array(Hash(String, JSON::Any)))
+      getter options : Hash(String, JSON::Any)
+
+      def initialize(@rows, @options)
       end
-      
-      # Convert to hash for Telegram API
-      def to_h : Hash(String, JSON::Any)
-        result = {} of String => JSON::Any
-        result["keyboard"] = JSON::Any.new(@rows.map do |row|
-          JSON::Any.new(row.map do |btn|
-            JSON::Any.new(btn)
-          end)
+
+      def to_h
+        res = @options.dup
+        res["keyboard"] = JSON::Any.new(@rows.map do |row|
+          JSON::Any.new(row.map { |btn| JSON::Any.new(btn) })
         end)
-        
-        @options.each do |key, value|
-          result[key] = JSON::Any.new(value)
-        end
-        
-        result
+        res
       end
-      
-      # Convert to JSON
-      def to_json(*args)
-        to_h.to_json(*args)
+
+      def to_json(json : JSON::Builder)
+        to_h.to_json(json)
       end
     end
-    
-    # Factory method for creating reply keyboards
-    def self.keyboard(&block : ReplyBuilder ->)
+
+    def self.keyboard(&block : ReplyBuilder ->) : ReplyKeyboard
       builder = ReplyBuilder.new
-      block.call(builder)
+      yield builder
       builder.build
     end
   end
