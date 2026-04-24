@@ -144,7 +144,7 @@ module Telecr
       def set_webhook(**options)
         url = generate_url
         Log.info { "Setting Webhook: #{url}" }
-        @bot.set_webhook(url: url, secret_token: @secret_token, **options)
+        @bot.set_webhook(url: url, secret_token: @secret_token)
       end
 
       private def generate_url : String

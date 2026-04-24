@@ -33,16 +33,23 @@ module Telecr
       end 
       
       # Start bot in webhook mode
-      def start_webhook(path : String = "/webhook", port : Int32? = nil, **args)
+      def start_webhook(path : String = "/webhook", port : Int32? = nil)
         @webhook_path = path
-        @webhook_server = Webhook::Server.new(self, port: port, **args)
+        @webhook_server = Webhook::Server.new(self, port: port)
         @webhook_server.try(&.run)
         @webhook_server.try(&.set_webhook)
         @webhook_server
       end
 
+      def set_webhook(url : String? = nil, secret_token : String? = nil)
+        params = {} of String => String
+        params["url"] = url if url
+        params["secret_token"] = secret_token if secret_token
+        @client.call("setWebhook", params)
+      end
+
       # New for API 9.6: Managed Bot Handler
-      def managed_bot(&block)
+      def managed_bot(&block : Context ->)
         on(:managed_bot) do |ctx|
           block.call(ctx)
         end
@@ -60,7 +67,7 @@ module Telecr
       end
 
       # Preserving existing Command Logic
-      def command(name : String, &block)
+      def command(name : String, &block : Context ->)
         pattern = %r{^/#{Regex.escape(name)}(?:@\w+)?(?:\s+(.+))?$}i
         on(:message) do |ctx|
           if (msg = ctx.message) && (txt = msg.text)
@@ -73,7 +80,7 @@ module Telecr
         end 
       end 
 
-      def hears(pattern : Regex | String, &block)
+      def hears(pattern : Regex | String, &block : Context ->)
         on(:message) do |ctx|
           if (msg = ctx.message) && (txt = msg.text)
             if match_data = txt.match(pattern)
@@ -84,7 +91,7 @@ module Telecr
         end 
       end 
 
-      def on(type : Symbol, **filters, &block)
+      def on(type : Symbol, **filters, &block : Context ->)
         @handlers.add(type.to_s, filters, block)
       end 
 
