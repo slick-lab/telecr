@@ -12,7 +12,7 @@ Telegram bot framework for Crystal. Inspired by telegem (Ruby).
 
 ## Documentation
 
-Full API documentation is available at: [https://telecr.gitlab.io](https://telecr-f83754.gitlab.io)
+Full API documentation is available at: [docs](https://slick-lab.github.io/telecr)
 
 ## Installation
 
