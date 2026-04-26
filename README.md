@@ -5,8 +5,7 @@ Telegram bot framework for Crystal. Inspired by telegem (Ruby).
 
 [![Pipeline Status](https://gitlab.com/telegem-cr/telecr/badges/main/pipeline.svg)](https://gitlab.com/telegem-cr/telecr/-/pipelines)
 [![CI](https://github.com/slick-lab/telecr/actions/workflows/ci.yml/badge.svg)](https://github.com/slick-lab/telecr/actions/workflows/ci.yml)
-[![Coverage](https://gitlab.com/telegem-cr/telecr/badges/main/coverage.svg)](https://gitlab.com/telegem-cr/telecr/-/jobs)
-[![Latest Release](https://github.com/slick-lab/telecr/-/badges/release.svg)](https://github.com/slick-lab/telecr/releases)
+[![Latest Release](https://img.shields.io/github/v/release/slick-lab/telecr)](https://github.com/slick-lab/telecr/releases)
 [![Crystal](https://img.shields.io/badge/crystal-1.0+-black)](https://crystal-lang.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
