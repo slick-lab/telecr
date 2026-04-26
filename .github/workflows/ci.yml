@@ -1,0 +1,152 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+env:
+  DOCS_PATH: docs-output
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    container:
+      image: crystallang/crystal:latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Install system dependencies
+        run: |
+          apt-get update -qq
+          apt-get install -y -qq libssl-dev git
+      
+      - name: Install shards
+        run: shards install
+      
+      - name: Run tests
+        run: crystal spec
+      
+      - name: Upload test artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-output
+          path: spec/output/
+      
+      - name: Upload JUnit test report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: junit-report
+          path: spec/output/junit.xml
+
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: crystallang/crystal:latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Install system dependencies
+        run: |
+          apt-get update -qq
+          apt-get install -y -qq libssl-dev git
+      
+      - name: Install shards
+        run: shards install
+      
+      - name: Build telecr
+        run: crystal build src/telecr.cr -o telecr
+      
+      - name: Build telecr-ssl
+        run: crystal build bin/telecr-ssl.cr -o telecr-ssl
+      
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: binaries
+          path: |
+            telecr
+            telecr-ssl
+          retention-days: 7
+
+  docs:
+    runs-on: ubuntu-latest
+    container:
+      image: crystallang/crystal:latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Install system dependencies
+        run: |
+          apt-get update -qq
+          apt-get install -y -qq libssl-dev git
+      
+      - name: Install shards
+        run: shards install
+      
+      - name: Generate documentation
+        run: crystal docs --output=$DOCS_PATH
+      
+      - name: Upload docs artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: documentation
+          path: ${{ env.DOCS_PATH }}
+          retention-days: 7
+
+  pages:
+    runs-on: ubuntu-latest
+    needs: docs
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Download docs artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: documentation
+          path: ${{ env.DOCS_PATH }}
+      
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+      
+      - name: Move docs to public directory
+        run: mv $DOCS_PATH public
+      
+      - name: Upload GitHub Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: public
+  
+  deploy-pages:
+    runs-on: ubuntu-latest
+    needs: pages
+    if: github.ref == 'refs/heads/main'
+    
+    permissions:
+      pages: write
+      id-token: write
+    
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
