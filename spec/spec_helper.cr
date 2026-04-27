@@ -5,7 +5,7 @@ require "webmock"
 require "../src/telecr"
 
 # Configure WebMock to prevent real HTTP requests during tests
-WebMock.allow_net_connect = false 
+WebMock.allow_net_connect = false
 
 # Helper to load fixture data
 def fixture(name : String) : String

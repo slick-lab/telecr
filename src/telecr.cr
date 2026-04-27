@@ -23,7 +23,7 @@ module Telecr
   def self.new(token : String)
     Core::Bot.new(token)
   end
-  
+
   # Create a reply keyboard
   #
   # @yield [Markup::ReplyBuilder] Keyboard builder
@@ -31,7 +31,7 @@ module Telecr
   def self.keyboard(&block : Markup::ReplyBuilder ->)
     Markup.keyboard(&block)
   end
-  
+
   # Create an inline keyboard
   #
   # @yield [Markup::InlineBuilder] Keyboard builder
@@ -39,7 +39,7 @@ module Telecr
   def self.inline(&block : Markup::InlineBuilder ->)
     Markup.inline(&block)
   end
-  
+
   # Create remove keyboard markup
   #
   # @param options [Hash] Keyboard options
@@ -47,7 +47,7 @@ module Telecr
   def self.remove_keyboard(**options)
     {remove_keyboard: true}.merge(options)
   end
-  
+
   # Create force reply markup
   #
   # @param options [Hash] Force reply options
@@ -55,7 +55,7 @@ module Telecr
   def self.force_reply(**options)
     {force_reply: true}.merge(options)
   end
-  
+
   # Get library version
   #
   # @return [String] Version number

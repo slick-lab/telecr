@@ -17,21 +17,20 @@ module Telecr
       def initialize(**options)
         @options = {
           global: {max: 30, per: 1},
-          user: {max: 5, per: 10},
-          chat: {max: 20, per: 60}
+          user:   {max: 5, per: 10},
+          chat:   {max: 20, per: 60},
         }.merge(options)
-        
+
         # Use MemoryStore for rate limiting counters
         @counters = {
           global: Session::MemoryStore.new,
-          user: Session::MemoryStore.new,
-          chat: Session::MemoryStore.new
+          user:   Session::MemoryStore.new,
+          chat:   Session::MemoryStore.new,
         }
-        #logger may not be available in all contexts, so we check before using
+        # logger may not be available in all contexts, so we check before using
         @logger = Log.for("telecr.api")
-
       end
-      
+
       # Main middleware call
       #
       # @param ctx [Core::Context] Current context
@@ -40,20 +39,18 @@ module Telecr
       def call(ctx : Core::Context, next_mw : Core::Context ->)
         # Skip rate limiting for certain update types
         return next_mw.call(ctx) unless should_rate_limit?(ctx)
-        
+
         # Check if limits exceeded
         if limit_exceeded?(ctx)
           @logger.error("rate limited") if ctx.logger
           return rate_limit_response(ctx)
         end
-        
+
         # Increment counters and continue
         increment_counters(ctx)
         next_mw.call(ctx)
       end
-      
-     
-      
+
       # Determine if this update should be rate limited
       private def should_rate_limit?(ctx : Core::Context) : Bool
         # Don't rate limit polls or chat member updates
@@ -61,59 +58,59 @@ module Telecr
         return false if ctx.update.chat_member?
         true
       end
-      
+
       # Check if any limit is exceeded
       private def limit_exceeded?(ctx : Core::Context) : Bool
         global_limit?(ctx) || user_limit?(ctx) || chat_limit?(ctx)
       end
-      
+
       # Check global limit
       private def global_limit?(ctx : Core::Context) : Bool
         check_limit(:global, "global", ctx)
       end
-      
+
       # Check per-user limit
       private def user_limit?(ctx : Core::Context) : Bool
         return false unless user_id = ctx.from.id
         check_limit(:user, "user:#{user_id}", ctx)
       end
-      
+
       # Check per-chat limit
       private def chat_limit?(ctx : Core::Context) : Bool
         return false unless chat_id = ctx.chat.id
         check_limit(:chat, "chat:#{chat_id}", ctx)
       end
-      
+
       # Generic limit checker
       private def check_limit(type : Symbol, key : String, ctx : Core::Context) : Bool
         limit_config = @options[type]?
         return false unless limit_config
-        
+
         counter = @counters[type].get(key)
         current = counter ? counter.to_s.to_i : 0
         current >= limit_config[:max]
       end
-      
+
       # Increment all applicable counters
       private def increment_counters(ctx : Core::Context)
         now = Time.utc
-        
+
         # Global counter
         if global_config = @options[:global]?
           @counters[:global].increment("global", 1, ttl: global_config[:per])
         end
-        
+
         # User counter
         if (user_config = @options[:user]?) && (user_id = ctx.from.id)
           @counters[:user].increment("user:#{user_id}", 1, ttl: user_config[:per])
         end
-        
+
         # Chat counter
         if (chat_config = @options[:chat]?) && (chat_id = ctx.chat.id)
           @counters[:chat].increment("chat:#{chat_id}", 1, ttl: chat_config[:per])
         end
       end
-      
+
       # Response when rate limit is hit
       private def rate_limit_response(ctx : Core::Context)
         ctx.reply("⏳ Please wait a moment before sending another request.") rescue nil

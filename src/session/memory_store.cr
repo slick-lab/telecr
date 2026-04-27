@@ -15,7 +15,7 @@ module Telecr
         @default_ttl : Int32 = 300,
         @cleanup_interval : Int32 = 300,
         @backup_path : String? = nil,
-        @backup_interval : Int32 = 60
+        @backup_interval : Int32 = 60,
       )
         load_from_disk if @backup_path && File.exists?(@backup_path.not_nil!)
       end
@@ -24,10 +24,10 @@ module Telecr
       def set(key, value : JSON::Any, ttl : Int32? = nil) : JSON::Any
         auto_cleanup
         key_s = key.to_s
-        
+
         @store[key_s] = value
         @ttls[key_s] = Time.utc + (ttl || @default_ttl).seconds
-        
+
         auto_backup
         value
       end
@@ -49,11 +49,11 @@ module Telecr
       def increment(key, amount = 1, ttl = nil) : Int64
         key_s = key.to_s
         current = get(key_s)
-        
+
         # Extract numeric value safely
         val = current.try(&.as_i64?) || current.try(&.as_s?.try(&.to_i64?)) || 0_i64
         new_val = val + amount
-        
+
         set(key_s, JSON::Any.new(new_val), ttl)
         new_val
       end
@@ -62,7 +62,7 @@ module Telecr
       def cleanup
         now = Time.utc
         expired_keys = [] of String
-        
+
         @ttls.each do |key, expires|
           expired_keys << key if now > expires
         end
@@ -71,19 +71,19 @@ module Telecr
           @store.delete(key)
           @ttls.delete(key)
         end
-        
+
         @last_cleanup = now
       end
 
       # Atomic backup to disk
       def backup!
         return unless path = @backup_path
-        
+
         # Prepare serializable format
         data = {
           "store"     => @store,
           "ttls"      => @ttls.transform_values(&.to_unix),
-          "timestamp" => Time.utc.to_unix
+          "timestamp" => Time.utc.to_unix,
         }
 
         dir = File.dirname(path)
@@ -93,22 +93,22 @@ module Telecr
         temp_path = "#{path}.tmp"
         File.open(temp_path, "w") { |f| data.to_json(f) }
         File.rename(temp_path, path)
-        
+
         @last_backup = Time.utc
       end
 
       # Restore from disk with validation
       def restore!
         return unless (path = @backup_path) && File.exists?(path)
-        
+
         begin
           raw_data = File.open(path) { |f| JSON.parse(f) }
-          
+
           @store.clear
           @ttls.clear
 
           raw_data["store"].as_h.each { |k, v| @store[k] = v }
-          raw_data["ttls"].as_h.each do |k, v| 
+          raw_data["ttls"].as_h.each do |k, v|
             @ttls[k] = Time.unix(v.as_i64)
           end
         rescue e : Exception

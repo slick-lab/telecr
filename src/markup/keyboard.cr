@@ -47,7 +47,7 @@ module Telecr
         @options = {
           "resize_keyboard"   => JSON::Any.new(true),
           "one_time_keyboard" => JSON::Any.new(false),
-          "selective"         => JSON::Any.new(false)
+          "selective"         => JSON::Any.new(false),
         }
       end
 
@@ -56,11 +56,22 @@ module Telecr
         self
       end
 
-      def resize(v = true)   @options["resize_keyboard"] = JSON::Any.new(v); self end
-      def one_time(v = true) @options["one_time_keyboard"] = JSON::Any.new(v); self end
-      def selective(v = true) @options["selective"] = JSON::Any.new(v); self end
-      def persistent(v = true) @options["is_persistent"] = JSON::Any.new(v); self end
-      
+      def resize(v = true)
+        @options["resize_keyboard"] = JSON::Any.new(v); self
+      end
+
+      def one_time(v = true)
+        @options["one_time_keyboard"] = JSON::Any.new(v); self
+      end
+
+      def selective(v = true)
+        @options["selective"] = JSON::Any.new(v); self
+      end
+
+      def persistent(v = true)
+        @options["is_persistent"] = JSON::Any.new(v); self
+      end
+
       def placeholder(text : String)
         @options["input_field_placeholder"] = JSON::Any.new(text)
         self
@@ -91,7 +102,7 @@ module Telecr
       end
     end
 
-    def self.keyboard(&block : ReplyBuilder ->) : ReplyKeyboard
+    def self.keyboard(& : ReplyBuilder ->) : ReplyKeyboard
       builder = ReplyBuilder.new
       yield builder
       builder.build

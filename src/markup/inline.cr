@@ -22,7 +22,7 @@ module Telecr
       end
 
       def web_app(text : String, url : String, style : String? = nil, emoji_id : String? = nil)
-        base_button(text, style, emoji_id).tap do |b| 
+        base_button(text, style, emoji_id).tap do |b|
           b["web_app"] = JSON::Any.new({"url" => JSON::Any.new(url)})
         end
       end
@@ -75,7 +75,7 @@ module Telecr
         {
           "inline_keyboard" => @rows.map do |row|
             row.map { |btn| btn }
-          end
+          end,
         }
       end
 
@@ -85,7 +85,7 @@ module Telecr
     end
 
     # Factory method for the DSL
-    def self.inline(&block : InlineBuilder ->) : InlineKeyboard
+    def self.inline(& : InlineBuilder ->) : InlineKeyboard
       builder = InlineBuilder.new
       yield builder
       builder.build

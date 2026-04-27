@@ -3,7 +3,7 @@
 module Telecr
   module Core
     # Abstract base class that all middleware must inherit from.
-    # 
+    #
     # Middleware allows you to intercept and process updates before they reach
     # your handlers. Common use cases include:
     # - Logging and Analytics

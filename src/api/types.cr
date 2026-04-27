@@ -47,20 +47,31 @@ module Telecr
 
     class Chat < BaseType
       property id : Int64
-      
+
       @[JSON::Field(key: "type")]
       property chat_type : String
-      
+
       property title : String?
       property username : String?
       property first_name : String?
       property last_name : String?
       property is_forum : Bool?
 
-      def private? : Bool; chat_type == "private"; end
-      def group? : Bool; chat_type == "group"; end
-      def supergroup? : Bool; chat_type == "supergroup"; end
-      def channel? : Bool; chat_type == "channel"; end
+      def private? : Bool
+        chat_type == "private"
+      end
+
+      def group? : Bool
+        chat_type == "group"
+      end
+
+      def supergroup? : Bool
+        chat_type == "supergroup"
+      end
+
+      def channel? : Bool
+        chat_type == "channel"
+      end
 
       def to_s(io : IO) : Nil
         io << (title || username || "Chat ##{id}")
@@ -91,7 +102,7 @@ module Telecr
       property caption_entities : Array(MessageEntity)?
       property reply_to_message : Message?
       property via_bot : User?
-      
+
       # API 9.5/9.6 Additions
       property is_topic_message : Bool?
       property managed_bot_created : ManagedBotCreated?
@@ -118,7 +129,7 @@ module Telecr
         return nil unless command? && (txt = text) && (ents = entities)
         cmd_ent = ents.find { |e| e.entity_type == "bot_command" }
         return nil unless cmd_ent
-        
+
         cmd = txt[cmd_ent.offset, cmd_ent.length]
         cmd.lstrip('/').split('@').first
       end
@@ -133,8 +144,10 @@ module Telecr
         txt[args_start..-1].strip
       end
 
-      def reply? : Bool; !reply_to_message.nil?; end
-      
+      def reply? : Bool
+        !reply_to_message.nil?
+      end
+
       def has_media? : Bool
         !!(audio || document || photo || video || voice || video_note || sticker)
       end
@@ -149,9 +162,16 @@ module Telecr
       property data : String?
       property game_short_name : String?
 
-      def from_user? : Bool; true; end # Always has a 'from'
-      def message? : Bool; !message.nil?; end
-      def inline_message? : Bool; !inline_message_id.nil?; end
+      def from_user? : Bool
+        true
+      end # Always has a 'from'
+      def message? : Bool
+        !message.nil?
+      end
+
+      def inline_message? : Bool
+        !inline_message_id.nil?
+      end
     end
 
     class PollOption < BaseType
@@ -192,7 +212,7 @@ module Telecr
       property my_chat_member : JSON::Any?
       property chat_member : JSON::Any?
       property chat_join_request : JSON::Any?
-      
+
       # API 9.6 addition
       property managed_bot : ManagedBotUpdated?
 
@@ -207,14 +227,15 @@ module Telecr
       end
 
       def from : User?
-        message.try(&.from) || 
-        callback_query.try(&.from) || 
-        edited_message.try(&.from)
+        message.try(&.from) ||
+          callback_query.try(&.from) ||
+          edited_message.try(&.from)
       end
     end
 
     # Supporting Classes for 9.6
     class ManagedBotCreated < BaseType; end
+
     class ManagedBotUpdated < BaseType; end
   end
 end

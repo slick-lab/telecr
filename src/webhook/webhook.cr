@@ -25,27 +25,27 @@ module Telecr
         port : Int32? = nil,
         @host : String = "0.0.0.0",
         secret_token : String? = nil,
-        ssl : (Bool | Hash(Symbol, String))? = nil
+        ssl : (Bool | Hash(Symbol, String))? = nil,
       )
         @port = port || ENV["PORT"]?.try(&.to_i) || 3000
         @secret_token = secret_token || Random::Secure.hex(16)
-        
+
         # Determine SSL mode using  original priority logic
         @ssl_mode, @ssl_context = determine_ssl_mode(ssl)
-        
+
         log_configuration
       end
 
       private def determine_ssl_mode(ssl_options) : {Symbol, OpenSSL::SSL::Context::Server?}
         return {:none, nil} if ssl_options == false
-        
+
         # Preservation: Loading from .telecr-ssl config file
         if File.exists?(".telecr-ssl")
           begin
             config = YAML.parse(File.read(".telecr-ssl"))
             cert_path = config["cert_path"]?.try(&.to_s)
             key_path = config["key_path"]?.try(&.to_s)
-            
+
             if cert_path && key_path && File.exists?(cert_path) && File.exists?(key_path)
               context = load_certificate_files(cert_path, key_path)
               return {:cli, context} if context
@@ -54,12 +54,12 @@ module Telecr
             Log.warn { "Failed to load .telecr-ssl config: #{e.message}" }
           end
         end
-        
+
         # Manual SSL via options hash
         if ssl_options.is_a?(Hash)
           cert_path = ssl_options[:cert_path]?
           key_path = ssl_options[:key_path]?
-          
+
           if cert_path && key_path && File.exists?(cert_path) && File.exists?(key_path)
             context = load_certificate_files(cert_path, key_path)
             return {:manual, context} if context
@@ -67,7 +67,7 @@ module Telecr
         end
 
         # Cloud SSL (Reverse Proxy)
-        if ENV["TELECR_WEBHOOK_URL"]?.try { |u| u.starts_with?("https") }
+        if ENV["TELECR_WEBHOOK_URL"]?.try(&.starts_with?("https"))
           return {:cloud, nil}
         end
 
@@ -87,7 +87,7 @@ module Telecr
 
       def run(**webhook_options)
         return if @running
-        
+
         # Telegram strictly requires HTTPS for Webhooks
         if @ssl_mode == :none
           Log.error { "Telegram requires HTTPS. Use .telecr-ssl or a Cloud Proxy." }
@@ -101,7 +101,7 @@ module Telecr
 
         @running = true
         spawn { @server.not_nil!.listen }
-        
+
         # Register URL with Telegram
         set_webhook(**webhook_options)
       end

@@ -3,7 +3,7 @@ require "../api/*"
 require "json"
 require "log"
 
-module Telecr 
+module Telecr
   module Core
     class Bot
       getter client : Telecr::Api::Client
@@ -11,7 +11,7 @@ module Telecr
       getter running : Bool = false
       getter webhook_server : Webhook::Server?
       getter webhook_path : String?
-      
+
       # For long polling
       @offset : Int64 = 0
       @logger = Log.for("telecr.bot")
@@ -21,17 +21,17 @@ module Telecr
       def initialize(token : String)
         @client = Api::Client.new(token)
         @composer = Composer.new
-      end 
-      
+      end
+
       # Start bot in polling mode
-      def start_polling 
-        @running = true 
+      def start_polling
+        @running = true
         @logger.info { "Telecr bot started in polling mode" }
-        spawn do 
+        spawn do
           poll_loop
-        end 
-      end 
-      
+        end
+      end
+
       # Start bot in webhook mode
       def start_webhook(path : String = "/webhook", port : Int32? = nil)
         @webhook_path = path
@@ -57,10 +57,10 @@ module Telecr
 
       # New for API 9.6: User Profile Audios
       def get_user_profile_audios(user_id : Int64, offset : Int32? = nil, limit : Int32? = nil)
-        params = { "user_id" => user_id.to_s }
+        params = {"user_id" => user_id.to_s}
         params["offset"] = offset.to_s if offset
         params["limit"] = limit.to_s if limit
-        
+
         result = @client.call("getUserProfileAudios", params)
         # Use from_json to convert the API result hash into the typed object
         Types::UserProfileAudios.from_json(result.to_json)
@@ -77,8 +77,8 @@ module Telecr
               block.call(ctx)
             end
           end
-        end 
-      end 
+        end
+      end
 
       def hears(pattern : Regex | String, &block : Context ->)
         on(:message) do |ctx|
@@ -88,12 +88,12 @@ module Telecr
               block.call(ctx)
             end
           end
-        end 
-      end 
+        end
+      end
 
       def on(type : Symbol, **filters, &block : Context ->)
         @handlers.add(type.to_s, filters, block)
-      end 
+      end
 
       # Process raw data (JSON String or Hash-like)
       def process(data : String)
@@ -108,10 +108,10 @@ module Telecr
 
       private def poll_loop
         while @running
-          begin 
+          begin
             # Client returns JSON::Any array of updates
             raw_updates = @client.get_updates(offset: @offset, timeout: 30)
-            
+
             if raw_updates && raw_updates.as_a?
               raw_updates.as_a.each do |u_data|
                 # Convert each element to our typed Update object
@@ -133,34 +133,34 @@ module Telecr
           user_info = msg.from.try(&.username) || "unknown"
           @logger.debug { "Update ##{update.update_id} from @#{user_info}" }
         end
-        
+
         ctx = Context.new(update, self)
-        
-        begin 
+
+        begin
           run_middleware_chain(ctx) do |final_ctx|
             dispatch_to_handlers(final_ctx)
-          end 
-        rescue ex : Exception 
+          end
+        rescue ex : Exception
           handle_error(ex, ctx)
-        end 
+        end
       end
 
       private def run_middleware_chain(ctx, &final : Context ->)
         @composer.run(ctx, &final)
-      end 
-      
+      end
+
       private def dispatch_to_handlers(ctx)
         if handler = @handlers.find_match(ctx)
           handler.call(ctx)
         end
-      end 
+      end
 
       private def handle_error(ex, ctx)
         if handler = @error_handler
           handler.call(ex, ctx)
         else
           @logger.error { "Unhandled Error: #{ex.message}\n#{ex.backtrace.join("\n")}" }
-        end 
+        end
       end
 
       # Standard bot methods...

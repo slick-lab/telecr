@@ -21,16 +21,16 @@ module Telecr
       # Performance: Returns true if all filters pass
       def matches?(ctx : Context) : Bool
         return true if @filters.empty?
-        
+
         @filters.all? do |key, value|
           case key
-          when "text"           then matches_text?(ctx, value)
-          when "chat_type"      then matches_chat_type?(ctx, value)
-          when "command"        then matches_command?(ctx, value)
-          when "location"       then !ctx.message.try(&.location).nil?
-          when "contact"        then !ctx.message.try(&.contact).nil?
-          when "web_app_data"   then !ctx.message.try(&.web_app_data).nil?
-          when "business_id"    then ctx.business_connection_id == value
+          when "text"         then matches_text?(ctx, value)
+          when "chat_type"    then matches_chat_type?(ctx, value)
+          when "command"      then matches_command?(ctx, value)
+          when "location"     then !ctx.message.try(&.location).nil?
+          when "contact"      then !ctx.message.try(&.contact).nil?
+          when "web_app_data" then !ctx.message.try(&.web_app_data).nil?
+          when "business_id"  then ctx.business_connection_id == value
           else
             handle_dynamic_filter(ctx, key, value)
           end
@@ -42,7 +42,7 @@ module Telecr
         case pattern
         when Regex  then text.match?(pattern)
         when String then text.includes?(pattern)
-        else false
+        else             false
         end
       end
 
@@ -56,10 +56,10 @@ module Telecr
 
       def handle_dynamic_filter(ctx : Context, key : String, value : FilterValue) : Bool
         case key
-        when "user_id" then ctx.user_id == value
-        when "chat_id" then ctx.chat_id == value
+        when "user_id"  then ctx.user_id == value
+        when "chat_id"  then ctx.chat_id == value
         when "is_reply" then ctx.reply? == value
-        else false
+        else                 false
         end
       end
     end
@@ -73,18 +73,18 @@ module Telecr
         # Convert Symbol keys to String for the Handler
         string_filters = {} of String => FilterValue
         filters.each { |k, v| string_filters[k.to_s] = v }
-        
+
         @handlers[type] ||= [] of Handler
         @handlers[type] << Handler.new(string_filters, proc)
       end
 
       def find_match(ctx : Context) : Handler?
         type = ctx.update_type.to_s # Uses the symbol from Types::Update
-        
+
         @handlers[type]?.try &.each do |handler|
           return handler if handler.matches?(ctx)
         end
-        
+
         nil
       end
 
@@ -92,7 +92,7 @@ module Telecr
         @handlers.transform_values do |handlers|
           {
             "count"       => handlers.size,
-            "total_calls" => handlers.sum(&.call_count)
+            "total_calls" => handlers.sum(&.call_count),
           }
         end
       end
